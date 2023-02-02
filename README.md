@@ -231,7 +231,7 @@ print('ufce3 time:', threetime)
 ```
 Generating counterfactuals with DiCE
 
-fro DiCE, need to install its package (pip install dice_ml)
+for DiCE, need to install its package (pip install dice_ml)
 ```python
 import time
 import dice_ml
@@ -251,7 +251,8 @@ dicetime = end-start
 print('dice time:', dicetime)
 ```
 Generating counterfactuals with AR method
-for AR, we need to install its package (pip install actionable-recourse)
+
+For AR, we need to install its package (pip install actionable-recourse)
 ```python
 import recourse as rs
 start = time.time()
@@ -279,13 +280,14 @@ artime = end-start
 print('AR time:', artime)
 ```
 Generating counterfactual with CEM 
+
 I used results already computed from the Google.Colab, CEM package was working fine on colab (Also, for few plots, results are ficticious for this specific example demo).
 
 Efficacy of CF methods
 
 Sparsity
 
-For example demo, only one evaluation metric is displayed here, for complete evaluation metrics and results (see file CF.ipynb)
+For example demo, only one evaluation metric is displayed here, for complete evaluation metrics and results (see file `CF-prototype-based-approach-src.ipynb` or `CF-prototype-based-approach-src.py`)
 ```python
 one_sparsity_d, one_val = ufc.sparsity_count(oneF_cfdf, len(oneF_cfdf), X_test, numf)
 two_sparsity_d, two_val = ufc.sparsity_count(twoF_cfdf, len(twoF_cfdf), X_test,  numf)
@@ -311,7 +313,7 @@ error = [dice_std/len(features), ar_std/len(features), one_std/len(features), tw
 # Build the plot
 ufc.barplot(methods, CTEs, x_pos, error, 'Sparsity', 'lower is the better', save=False)
 ```
-Explanation generation in natural language (using pylng, simplenlg)
+Explanation generation in natural language (using pynlg, simplenlg)
 ```python
 outcome_var = "The personal loan"
 actual_class = 'denied'
