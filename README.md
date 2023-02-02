@@ -47,7 +47,7 @@ from sklearn.feature_selection import mutual_info_regression
 from sklearn.feature_selection import mutual_info_classif
 ```
 Load data
-```
+```python
 path = r'C:\Users\laboratorio\Documents\Suffian PhD Work\codes\datasets\Bank_Loan.csv'
 bankloan = pd.read_csv(path)
 del bankloan['Unnamed: 0']
@@ -55,7 +55,7 @@ del bankloan['age']
 del bankloan['Experience']
 ```
 Collecting Label-1 data points (desired space)
-```
+```python
 data_lab1 = pd.DataFrame()
 data_lab1 = bankloan[bankloan["Personal Loan"] == 1]
 data_lab0 = bankloan[bankloan["Personal Loan"] == 0]
@@ -63,14 +63,14 @@ data_lab1 = data_lab1.drop(['Personal Loan'], axis=1)
 len(data_lab1), len(data_lab0)
 ```
 Importing functionality of UFCE
-```
+```python
 import ufce
 from goodness import *
 from ufce import UFCE
 ufc = UFCE()
 ```
 Finding Mutual Information
-```
+```python
 Y = bankloan.loc[ : , bankloan.columns == 'Personal Loan'] 
 X = bankloan.loc[ : , bankloan.columns != 'Personal Loan']
 for colname in X.select_dtypes("object"):
@@ -86,7 +86,7 @@ F = ufc.get_top_MI_features(X, features)
 F[:5]
 ```
 10-fold Cross-validation
-```
+```python
 from sklearn.model_selection import cross_val_score
 lr = LogisticRegression(max_iter=1000)
 lr.fit(X_train, y_train)
@@ -95,7 +95,7 @@ print('Cross Validation accuracy scores: %s' % scores)
 print('Cross Validation accuracy: %.3f +/- %.3f' % (np.mean(scores),np.std(scores)))
 ```
 Train-test splits with a random state that provides the best distribution fit of data
-```
+```python
 from scipy import stats
 from sklearn.model_selection import train_test_split
 n_features = X.shape[1]
@@ -115,7 +115,7 @@ X_train.to_csv(path + 'X_train' + '.csv', index=False)
 ```
 
 Training the ML models
-```
+```python
 lr = LogisticRegression(max_iter=1000)
 model = MLPClassifier(max_iter=1000)
 model.fit(X_train,y_train.values.ravel())
@@ -125,7 +125,7 @@ print("LR accuracy",accuracy_score(y_test.values.ravel(), lr.predict(X_test)))
 ```
 
 User feedback constraints (these constraints were subjected equally for each test nstance) 
-```
+```python
 uf = {'Income':70, 'CCAvg':3.0, 'Family': 3, 'Education':3, 'Mortgage':100, 'CDAccount':1,'Online':1, 'SecuritiesAccount':1, 'CreditCard':1}
 catf = ['CDAccount','Online', 'SecuritiesAccount', 'CreditCard']
 numf = ['Income', 'CCAvg', 'Family', 'Education', 'Mortgage']
@@ -134,7 +134,7 @@ desired_outcome = 1.0
 k = 1 #no. of counterfactuals
 ```
 Finding Nearest Neighbors
-```
+```python
 nn, idx = ufc.NNkdtree(data_lab1, X_test[:1], 100)
 cfs = ufc.get_cfs_validated(nn, lr, 1)
 # len(cfs)
@@ -142,7 +142,7 @@ cfs = ufc.get_cfs_validated(nn, lr, 1)
 ufc.feat2change(X_test[:1], nn[0:1])
 ```
 Generating counterfatuals with UFCE1
-```
+```python
 oneF_cfdf = pd.DataFrame()
 onetest_cfdf = pd.DataFrame()
 found_indexes = []
@@ -168,7 +168,7 @@ onetime = end - start
 print('ufce1 time', onetime)
 ```
 Generating counterfactuals with UFCE2
-```
+```python
 start = time.time()
 n = 0
 perturb_step = {} 
@@ -199,7 +199,7 @@ twotime = end-start
 print('ufce2 time:', twotime)
 ```
 Generating counterfactuals with UFCE3
-```
+```python
 start = time.time()
 perturb_step = {}
 n = 0
@@ -232,7 +232,7 @@ print('ufce3 time:', threetime)
 Generating counterfactuals with DiCE
 
 fro DiCE, need to install its package (pip install dice_ml)
-```
+```python
 import time
 import dice_ml
 from dice_ml.utils import helpers # helper functions
@@ -252,7 +252,7 @@ print('dice time:', dicetime)
 ```
 Generating counterfactuals with AR method
 for AR, we need to install its package (pip install actionable-recourse)
-```
+```python
 import recourse as rs
 start = time.time()
 A = rs.ActionSet(X)
@@ -286,7 +286,7 @@ Efficacy of CF methods
 Sparsity
 
 For example demo, only one evaluation metric is displayed here, for complete evaluation metrics and results (see file CF.ipynb)
-```
+```python
 one_sparsity_d, one_val = ufc.sparsity_count(oneF_cfdf, len(oneF_cfdf), X_test, numf)
 two_sparsity_d, two_val = ufc.sparsity_count(twoF_cfdf, len(twoF_cfdf), X_test,  numf)
 three_sparsity_d, three_val = ufc.sparsity_count(threeF_cfdf, len(threeF_cfdf), X_test,  numf)
@@ -312,7 +312,7 @@ error = [dice_std/len(features), ar_std/len(features), one_std/len(features), tw
 ufc.barplot(methods, CTEs, x_pos, error, 'Sparsity', 'lower is the better', save=False)
 ```
 Explanation generation in natural language (using pylng, simplenlg)
-```
+```python
 outcome_var = "The personal loan"
 actual_class = 'denied'
 desired_class = 'accepted'
