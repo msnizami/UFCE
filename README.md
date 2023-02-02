@@ -11,7 +11,7 @@ The datasets can be changed and the parameters need to change accordingly (e.g.,
 This example provides demo on Bank Loan dataset in the Data/ repository. A step by step demo for bank loan data is provided with complete details in the file `CF-prototype-based-approach-src.ipynb`.
 
 Import libraries.
-```
+```python
 import time
 import gower
 import random
