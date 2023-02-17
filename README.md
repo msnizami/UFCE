@@ -112,3 +112,5 @@ The file `experiments.py` can be run in PyCharm IDE or in Jupyetr Notebook or on
 To do so, download the code folder (UFCE). Open the file `experiments.py` in any editor and set the paths of your system or working directory.
 Open the cmd terminal, navigate to the root folder and run the command: `python experiments.py`
 
+##### The already generated results are present in the directory at `UFCE/folds/bank/results/`. Similarly, the results of all CF methods on 5 data sets for different evaluation metrics are present in the directory at `UFCE/folds/`. 
+
