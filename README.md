@@ -35,7 +35,7 @@ mlp_blackbox, mlp_mean, mlp_std, lr_blackbox, lr_mean, lr_std, testset, Xtrain, 
 
 User specified constraints (User Preferences)
 ```python
-# this will return user-constraints specific to data set.
+# this will return user-constraints specific to data set (default), can be changed as per requirement.
 features, catf, numf, uf, f2change, outcome_label, desired_outcome, nbr_features, protectf, data_lab0, data_lab1 = get_bank_user_constraints(bankloan) 
 ```
 
@@ -56,6 +56,7 @@ print(f'\t Top-5 Mutually-informed feature pairs:{MI_FP[:5]}')
 Single feature counterfactuals
 ```python
 no_cf_exp = 1
+# this calls to Single_F method
 onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X, 
                                                                data_lab1, 
                                                                testset[:1], uf, 
@@ -69,6 +70,7 @@ print(display(onecfs[:1]) #counterfactuals from ufce1
 Double feature change
 ```python
 no_cf_exp = 1
+# this calls to Doule_F method
 twocfs, methodtimes[i], foundidx2, interval2, testout2 = dfexp(X, data_lab1, 
                                                                testset[:1], 
                                                                uf, MI_FP[:5], 
@@ -83,6 +85,7 @@ print(display(twocfs[:1]) #counterfactuals from ufce2
 Tripple feature change
 ```python
 no_cf_exp = 1
+# this calls to Triple_F method
 threecfs, methodtimes[i], foundidx3, interval3, testout3 = tfexp(X, data_lab1,
                                                                   testset[:5], 
                                                                   uf, MI_FP[:5], 
