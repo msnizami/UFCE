@@ -98,12 +98,12 @@ def sfexp(X, data_lab1, X_test, uf, f2change, numf, catf, bb, desired_outcome, k
         n = 0
         nn, idx = ufc.NNkdtree(data_lab1, X_test[t:t+1], 100) #increase radius size as per the dataset
         if nn.empty != True:
-            interval = ufc.make_intervals(nn, uf, f2change, X_test[t:t+1], catf, numf) # also use cfs instead of nn
-            cc = ufc.one_feature_binsearch(X_test[t:t+1], catf, numf, interval, uf, nn, f2change, bb, desired_outcome, k)
+            interval = ufc.make_intervals(nn, uf, f2change, X_test[t:t+1])
+            cc = ufc.Single_F(X_test[t:t+1], catf, interval, bb, desired_outcome)
             while cc.empty == True:
                 n = n+1
-                interval = ufc.make_intervals(nn, uf, f2change, X_test[t:t+1], catf, numf) #also use cfs instead of nn
-                cc = ufc.one_feature_binsearch(X_test[t:t+1], catf, numf, interval, uf, nn, f2change, bb, desired_outcome, k)
+                interval = ufc.make_intervals(nn, uf, f2change, X_test[t:t+1])
+                cc = ufc.Single_F(X_test[t:t+1], catf, interval, bb, desired_outcome)
                 if n >= 10:
                     break
             if cc.empty != True:
@@ -131,14 +131,14 @@ def dfexp(X, data_lab1, X_test, uf, F, numf, catf, features, protectf, bb, desir
     testout = pd.DataFrame()
     protectedf = protectf
 
-    # running th eexperiment for mutliple test instances (at-least 50 for comparison)
+    # running th experiment for mutliple test instances (at-least 50 for comparison)
     for t in range(len(X_test)):
         n=0
         nn, idx = ufc.NNkdtree(data_lab1, X_test[t:t+1], 100)
 
         if nn.empty != True:
             intervals = ufc.make_uf_nn_interval(nn, uf, F[:5], X_test[t:t+1])
-            cc2, cfsexp2 = ufc.two_feature_update_corr_reg_binsearch(X, X_test[t:t+1], protectedf, F[:5], catf, numf, intervals, features, perturb_step, bb, desired_outcome, k)
+            cc2, cfsexp2 = ufc.Double_F(X, X_test[t:t+1], protectedf, F[:5], catf, numf, intervals, features, bb, desired_outcome)
             if cc2.empty != True:
                 foundidx.append(t)
                 intervald[t] = intervals
@@ -146,7 +146,7 @@ def dfexp(X, data_lab1, X_test, uf, F, numf, catf, features, protectf, bb, desir
             while cc2.empty == True:
                 n = n+1
                 intervals = ufc.make_uf_nn_interval(nn, uf, F[:5], X_test[t:t+1])
-                cc2, cfsexp2 = ufc.two_feature_update_corr_reg_binsearch(X, X_test[t:t+1], protectedf, F[:5], catf, numf, intervals, features, perturb_step, bb, desired_outcome, k)
+                cc2, cfsexp2 = ufc.Double_F(X, X_test[t:t+1], protectedf, F[:5], catf, numf, intervals, features, bb, desired_outcome)
                 if n >= 10:
                     break
             if cc2.empty == True:
@@ -186,8 +186,8 @@ def tfexp(X, data_lab1, X_test, uf, F, numf, catf, features, protectdf, bb, desi
         n=0
         nn, idx = ufc.NNkdtree(data_lab1, X_test[t:t+1], 100)
         if nn.empty != True:
-            intervals = ufc.make_uf_nn_interval(nn, uf, F[:5], X_test[t:t+1]) # cfs instead nn
-            cc2, cfsexp2 = ufc.three_feature_update_corr_reg_binsearch(X, X_test[t:t+1], protectdf, F, catf, numf, intervals, features, perturb_step, bb, desired_outcome, k)
+            intervals = ufc.make_uf_nn_interval(nn, uf, F[:5], X_test[t:t+1]) 
+            cc2, cfsexp2 = ufc.Triple_F(X, X_test[t:t+1], protectdf, F, catf, numf, intervals, features, bb, desired_outcome)
             if cc2.empty != True:
                 foundidx.append(t)
                 intervald[t] = intervals
@@ -195,7 +195,7 @@ def tfexp(X, data_lab1, X_test, uf, F, numf, catf, features, protectdf, bb, desi
             while cc2.empty == True:
                 n = n+1
                 intervals = ufc.make_uf_nn_interval(nn, uf, F[:5], X_test[t:t+1])
-                cc2, cfsexp2 = ufc.three_feature_update_corr_reg_binsearch(X, X_test[t:t+1], protectdf, F, catf, numf, intervals, features, perturb_step, bb, desired_outcome, k)
+                cc2, cfsexp2 = ufc.Triple_F(X, X_test[t:t+1], protectdf, F, catf, numf, intervals, features, bb, desired_outcome)
                 if n >= 10:
                     break
             if cc2.empty == True:
@@ -232,22 +232,22 @@ def ufce_diverse(X, data_lab1, X_test, uf, F, numf, catf, features,f2change, pro
     c = pd.DataFrame()
     nn, idx = ufc.NNkdtree(data_lab1, X_test, 100)  # increase radius size as per the dataset
     if nn.empty != True:
-        interval1 = ufc.make_intervals(nn, uf, f2change, X_test, catf, numf)
+        interval1 = ufc.make_intervals(nn, uf, f2change, X_test)
         interval2 = ufc.make_uf_nn_interval(nn, uf, F[:5], X_test)
-        t1 = ufc.one_feature_binsearch(X_test, catf, numf, interval1, uf, nn, f2change, bb, desired_outcome, k)
+        t1 = ufc.Single_F(X_test, catf, interval1, bb, desired_outcome)
         if t1.empty != True:
             c = pd.concat([c, t1[:1]], ignore_index=True, axis=0)
-        t2, explore2 = ufc.two_feature_update_corr_reg_binsearch(X, X_test, protectdf, F[:5], catf, numf, interval2, features, perturb_step, bb, desired_outcome, k)
+        t2, explore2 = ufc.Double_F(X, X_test, protectdf, F[:5], catf, numf, interval2, features, bb, desired_outcome)
         if t2.empty != True:
             c = pd.concat([c, t2[:1]], ignore_index=True, axis=0)
-            t2d, explore2d = ufc.two_feature_update_corr_reg_binsearch(X, X_test, protectdf, F[2:5], catf, numf,
-                                                                     interval2, features, perturb_step, bb,
-                                                                     desired_outcome, k)
+            t2d, explore2d = ufc.Double_F(X, X_test, protectdf, F[2:5], catf, numf,
+                                                                     interval2, features, bb,
+                                                                     desired_outcome)
             if t2d.empty != True:
                 flag = check_two_different_feature_changes(X_test, t2, t2d)
                 if flag:
                     c = pd.concat([c, t2d[:1]], ignore_index=True, axis=0)
-        t3, explore3 = ufc.three_feature_update_corr_reg_binsearch(X, X_test, protectdf, F[:5], catf, numf, interval2, features, perturb_step, bb, desired_outcome, k)
+        t3, explore3 = ufc.Triple_F(X, X_test, protectdf, F[:5], catf, numf, interval2, features, bb, desired_outcome)
         if t3.empty != True:
             c = pd.concat([c, t3[:1]], ignore_index=True, axis=0)
     else:
