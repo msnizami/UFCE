@@ -172,7 +172,7 @@ class UFCE():
         matrix = dict()
         for f in num_f:
             for fl in num_f:
-                mi_scores = mutual_info_regression(X[f].to_frame(), X[fl], discrete_features='auto')
+                mi_scores = mutual_info_classif(X[f].to_frame(), X[fl], discrete_features='auto')
                 if fl !=f:
                     score = mi_scores[0]
                     matrix[score] = [fl,f]
@@ -229,14 +229,12 @@ class UFCE():
                 feat2change.append(f)
         return feat2change
     
-    def make_intervals(self, nn, uf, feat2change, test, catf, numf):
+    def make_intervals(self, nn, uf, feat2change, test):
         """
         :param nn: nearest neighbourhood dataframe
         :param uf: user feedback dictionary
         :param feat2change: feature to change
         :param test: test instance
-        :param catf: categorical features
-        :param numf: numerical features
         :return: feature intervals (dictionary)
         """
         intervals = dict()
@@ -342,19 +340,14 @@ class UFCE():
     #         cfs = cfs[cfs[c_f[i]].between(test[c_f[i]].values[0], (test[c_f[i]].values + uf[c_f[i]])[0])]
     #     return cfs
 
-    def one_feature_binsearch(self, test_instance, u_cat_f_list, numf, user_term_intervals, uf, nn, f2change, model, outcome, k):
+    def Single_F(self, test_instance, u_cat_f_list, user_term_intervals, model, outcome):
         """
 
         :param test_instance:
         :param u_cat_f_list:
-        :param numf:
         :param user_term_intervals:
-        :param uf:
-        :param nn:
-        :param f2change:
         :param model:
         :param outcome:
-        :param k:
         :return:
         """
         one_feature_dataframe = pd.DataFrame()
@@ -376,7 +369,7 @@ class UFCE():
                     end = interval_term_range[1]
                     # deciding next step of mid-value
                     step = (end - start) / 1
-                    def binarySearch(model, outcome, start, end):
+                    def perturb_binarySearch(model, outcome, start, end):
                         if end >= start:
                             cfdf = pd.DataFrame()
                             mid = start + (end - start)/2
@@ -390,9 +383,9 @@ class UFCE():
                                 return cfdf
                             # Search the right half
                             else:
-                                return binarySearch(model, outcome, mid + step, end)
+                                return perturb_binarySearch(model, outcome, mid + step, end)
                     #calling
-                    cfs = binarySearch(model, outcome, start, end)
+                    cfs = perturb_binarySearch(model, outcome, start, end)
                     cfdfout = pd.concat([cfdfout, cfs], ignore_index=True, axis=0)
             else:
                 tempdfcat = test_instance.copy()
@@ -441,7 +434,7 @@ class UFCE():
         ba = balanced_accuracy_score(y_test, y_pred)
         return log_reg, ba
 
-    def two_feature_update_corr_reg_binsearch(self, df, test_instance, protected_features, feature_pairs, u_cat_f_list, numf, user_term_intervals, features, perturbing_rates, model, desired_outcome, k):
+    def Double_F(self, df, test_instance, protected_features, feature_pairs, u_cat_f_list, numf, user_term_intervals, features, model, desired_outcome):
         """
         :param df:
         :param test_instance:
@@ -451,10 +444,8 @@ class UFCE():
         :param numf:
         :param user_term_intervals:
         :param features:
-        :param perturbing_rates:
         :param model:
         :param desired_outcome:
-        :param k:
         :return:
         """
 
@@ -463,98 +454,102 @@ class UFCE():
         two_feature_explore = pd.DataFrame()
         temptempdf = pd.DataFrame()
         temptempdf = test_instance.copy()
-
-        if len(feature_pairs) <= 1:
-            corr_features_dict, feature_to_use_list = self.get_highly_correlated(df, features)
-            iter = 0
-            while len(feature_to_use_list) != 0:  # and iter !=0
-                f1 = feature_to_use_list[0]
-                f2 = feature_to_use_list[1]
-                tempdf1 = pd.DataFrame()
-                tempdf1 = test_instance.copy()
-                tempdf2 = pd.DataFrame()
-                tempdfcat = pd.DataFrame()
-                tempdf2 = test_instance.copy()
-                if (f1 in numf and f2 in numf) and (f1 not in protected_features and f2 not in protected_features): # both numerical
+        feature_to_use_list = feature_pairs
+        for f in feature_to_use_list:
+            f1 = f[0]
+            f2 = f[1]
+            two_feature_data = pd.DataFrame()
+            temptempdf = pd.DataFrame()
+            tempdf1 = pd.DataFrame()
+            tempdf1 = test_instance.copy()
+            if (f1 in numf and f2 in numf) and (f1 not in protected_features and f2 not in protected_features):  # both numerical
+                if f1 and f2 in user_term_intervals.keys():
                     interval_term_range1 = user_term_intervals[f1]
                     start1 = interval_term_range1[0]
                     end1 = interval_term_range1[1]
                     reg_model, mse, rmse = self.regressionModel(df, f1, f2)
                     #reg_model, mse, rmse = self.regressionModel_intervalconfined(df, f1, user_term_intervals[f1], f2)
-                    if type(start1) and type(end1) != 'int':
+                    if isinstance(start1, int) and isinstance(end1, int):
                         f1_space = [item for item in range(start1, end1 + 1)]
                     else:
-                        f1_space = [round(random.uniform(start1, end1), 2) for _ in range(8)]
-                    #tempdf1.loc[:, f1] = f1_space[0]
-                    if rmse > 0.1:
+                        f1_space = sorted(np.round(random.uniform(start1, end1), 2) for _ in range(8))
+                    if mse > 0.5:
+                        iter = 0
                         while len(f1_space) != 0:
                             if len(f1_space) != 0:
                                 low = 0
                                 high = len(f1_space) - 1
                                 mid = (high - low) // 2
-                            else:
-                                break
+                                #print("lowmidhigh", f1_space[low], f1_space[mid], f1_space[high])
                             tempdf1.loc[:, f1] = f1_space[mid]
                             temptempdf = tempdf1.copy()
-                            #lower half search
                             tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                             f2_val = reg_model.predict(tempdf1.values)
                             if f2 == 'CCAvg':
                                 temptempdf.loc[:, f2] = f2_val[0]
                             else:
                                 temptempdf.loc[:, f2] = float(int(f2_val[0]))
-                            #if df[f2].min() <= int(f2_val[0]) <= df[f2].max(): #f2_val >= start2 and f2_val <= end2:
-                            two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0, sort=False)
-                            pred = model.predict(temptempdf.values)
-                            if pred == desired_outcome:  #
-                                cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0, sort=False)
-                                iter += 1
-                            #try:
-                            del f1_space[mid]
-                            #except:
-                            #    pass
-                elif (f1 in numf and f2 in u_cat_f_list) and (f1 not in protected_features and f2 not in protected_features): #num -> cat (binary classification)
-                    interval_term_range1 = user_term_intervals[f1]
-                    start1 = interval_term_range1[0]
-                    end1 = interval_term_range1[1]
-                    log_model, ba = self.catclassifyModel_confined(df, f1, user_term_intervals[f1], f2)
-                    f1_space = [item for item in range(start1, end1 + 1)]
-                    if ba >= 0.6:
-                        while len(f1_space) != 0:
-                            if len(f1_space) != 0:
-                                low = 0
-                                high = len(f1_space) - 1
-                                mid = (high - low) // 2
-                            else:
-                                break
-                        tempdf1.loc[:, f1] = f1_space[mid]
-                        temptempdf = tempdf1.copy()
-                        tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
-                        f2_val = log_model.predict(tempdf1.values)
-                        temptempdf.loc[:, f2] = float(int(f2_val[0]))
-                        if f2_val >= df[f2].min() and f2_val <= df[f2].max():
-                            two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0)
-                            pred = model.predict(temptempdf)
-                            if pred == desired_outcome:  #
-                                cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
-                                iter += 1
-                                try:
-                                    del f1_space[mid]
-                                except:
-                                    pass
-                elif (f1 in u_cat_f_list and f2 in u_cat_f_list) and (f1 not in protected_features and f2 not in protected_features):
-                    tempdf1.loc[:, f1] = 0.0 if tempdf1.loc[:, f1].values else 1.0  # to open
-                    tempdf1.loc[:, f2] = 0.0 if tempdf1.loc[:, f2].values else 1.0  # to open
-                    two_feature_explore = pd.concat([two_feature_explore, tempdf1], ignore_index=True, axis=0)
-                    pred = model.predict(tempdf1)
+                            if df[f2].min() <= f2_val[0] <= df[f2].max(): #f2_val >= start2 and f2_val <= end2:
+                                two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0, sort=False)
+                                pred = model.predict(temptempdf)
+                                if pred == desired_outcome:  #
+                                    cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0, sort=False)
+                                    iter += 1
+                            try:
+                                del f1_space[:mid+1]
+                            except:
+                                pass
+            elif (f1 in u_cat_f_list and f2 in u_cat_f_list) and f1 and f2 not in protected_features:  # both categorical
+                if f1 and f2 in user_term_intervals.keys():
+                    tempdfcat = test_instance.copy()
+                    tempdfcat.loc[:, f1] = user_term_intervals[f1][1] # 0.0 if tempdfcat.loc[:, f1].values else 1.0
+                    tempdfcat.loc[:, f2] = user_term_intervals[f2][1] #0.0 if tempdfcat.loc[:, f2].values else 1.0
+                    two_feature_explore = pd.concat([two_feature_explore, tempdfcat], ignore_index=True, axis=0)
+                    pred = model.predict(tempdfcat)
                     if pred == desired_outcome:
-                        cfdf = pd.concat([cfdf, tempdf1], ignore_index=True, axis=0)
-                        iter += 1
-                elif (f1 in u_cat_f_list and f2 in numf) and (f1 not in protected_features and f2 not in protected_features): # cat and num
+                        cfdf = pd.concat([cfdf, tempdfcat], ignore_index=True, axis=0)
+
+            elif (f1 in numf and f2 in u_cat_f_list) and f1 and f2 not in protected_features:  # num -> cat (binary classification)
+                if f1 and f2 in user_term_intervals.keys():
+                    interval_term_range1 = user_term_intervals[f1]
+                    start1 = int(interval_term_range1[0])
+                    end1 = int(interval_term_range1[1])
+                    log_model, ba = self.catclassifyModel(df, f1, f2)
+                    #log_model, ba = self.catclassifyModel_confined(df, f1, user_term_intervals[f1], f2)
+                    if isinstance(start1, int) and isinstance(end1, int):
+                        f1_space = [item for item in range(start1, end1 + 1)]
+                    else:
+                        f1_space = sorted(np.round(random.uniform(start1, end1), 2) for _ in range(8))
+                    if ba >= 0.8:
+                        while len(f1_space) != 0:
+                            low = 0
+                            high = len(f1_space) - 1
+                            mid = (high - low) // 2
+                            tempdf1.loc[:, f1] = f1_space[mid]
+                            temptempdf = tempdf1.copy()
+                            tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
+                            f2_val = log_model.predict(tempdf1.values)
+                            if f2 == 'CCAvg':
+                                temptempdf.loc[:, f2] = f2_val[0]
+                            else:
+                                temptempdf.loc[:, f2] = float(int(f2_val[0]))
+                            if f2_val >= df[f2].min() and f2_val <= df[f2].max():
+                                two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True,
+                                                                axis=0)
+                                pred = model.predict(temptempdf)
+                                if pred == desired_outcome:  #
+                                    cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
+                                    iter += 1
+                            try:
+                                del f1_space[:mid+1]
+                            except:
+                                pass
+            elif (f1 in u_cat_f_list and f2 in numf) and (f1 and f2 not in protected_features): # cat and num
+                if f1 and f2 in user_term_intervals.keys():
                     temptempdf = tempdf1.copy()
-                    tempdf1.loc[:, f1] = 0.0 if tempdf1.loc[:, f1].values else 1.0
-                    reg_model, mse, rmse = regressionModel(df, f1, f2)
-                    if mse < 1.5:
+                    tempdf1.loc[:, f1] = user_term_intervals[f1][1] #0.0 if tempdf1.loc[:, f1].values else 1.0
+                    reg_model, mse, rmse = self.regressionModel(df, f1, f2)
+                    if mse > 0.5:
                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                         f2_val = reg_model.predict(tempdf1.values)
                         if f2 == 'CCAvg':
@@ -563,135 +558,21 @@ class UFCE():
                             temptempdf.loc[:, f2] = float(int(f2_val[0]))
                         two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0,
                                                        sort=False)
-                        if df[f2].min() <= f2_val <= df[f2].max():  # f2_val >= start2 and f2_val <= end2:
+                        if df[f2].min() <= int(f2_val[0]) <= df[f2].max():  # f2_val >= start2 and f2_val <= end2:
                             pred = model.predict(temptempdf)
                             if pred == desired_outcome:
                                 cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
                                 iter += 1
-                else:
-                    print("Could'nt find  CFs for these features: ", f1, f2)
-                del feature_to_use_list[0:2]
-        else:
-            feature_to_use_list = feature_pairs
-            for f in feature_to_use_list:
-                f1 = f[0]
-                f2 = f[1]
-                two_feature_data = pd.DataFrame()
-                temptempdf = pd.DataFrame()
-                tempdf1 = pd.DataFrame()
-                tempdf1 = test_instance.copy()
-                if (f1 in numf and f2 in numf) and (f1 not in protected_features and f2 not in protected_features):  # both numerical
-                    if f1 and f2 in user_term_intervals.keys():
-                        interval_term_range1 = user_term_intervals[f1]
-                        start1 = interval_term_range1[0]
-                        end1 = interval_term_range1[1]
-                        reg_model, mse, rmse = self.regressionModel(df, f1, f2)
-                        #reg_model, mse, rmse = self.regressionModel_intervalconfined(df, f1, user_term_intervals[f1], f2)
-                        if isinstance(start1, int) and isinstance(end1, int):
-                            f1_space = [item for item in range(start1, end1 + 1)]
-                        else:
-                            f1_space = sorted(np.round(random.uniform(start1, end1), 2) for _ in range(8))
-                        if mse > 0.5:
-                            iter = 0
-                            while len(f1_space) != 0:
-                                if len(f1_space) != 0:
-                                    low = 0
-                                    high = len(f1_space) - 1
-                                    mid = (high - low) // 2
-                                    #print("lowmidhigh", f1_space[low], f1_space[mid], f1_space[high])
-                                tempdf1.loc[:, f1] = f1_space[mid]
-                                temptempdf = tempdf1.copy()
-                                tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
-                                f2_val = reg_model.predict(tempdf1.values)
-                                if f2 == 'CCAvg':
-                                    temptempdf.loc[:, f2] = f2_val[0]
-                                else:
-                                    temptempdf.loc[:, f2] = float(int(f2_val[0]))
-                                if df[f2].min() <= f2_val[0] <= df[f2].max(): #f2_val >= start2 and f2_val <= end2:
-                                    two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0, sort=False)
-                                    pred = model.predict(temptempdf)
-                                    if pred == desired_outcome:  #
-                                        cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0, sort=False)
-                                        iter += 1
-                                try:
-                                    del f1_space[:mid+1]
-                                except:
-                                    pass
-                elif (f1 in u_cat_f_list and f2 in u_cat_f_list) and f1 and f2 not in protected_features:  # both categorical
-                    if f1 and f2 in user_term_intervals.keys():
-                        tempdfcat = test_instance.copy()
-                        tempdfcat.loc[:, f1] = user_term_intervals[f1][1] # 0.0 if tempdfcat.loc[:, f1].values else 1.0
-                        tempdfcat.loc[:, f2] = user_term_intervals[f2][1] #0.0 if tempdfcat.loc[:, f2].values else 1.0
-                        two_feature_explore = pd.concat([two_feature_explore, tempdfcat], ignore_index=True, axis=0)
-                        pred = model.predict(tempdfcat)
-                        if pred == desired_outcome:
-                            cfdf = pd.concat([cfdf, tempdfcat], ignore_index=True, axis=0)
+            else:
+                print("could'nt found counterfactuals for the features: ", f1, f2)
+    #if len(cfdf) != 0:
+    #    cfdf.drop_duplicates(inplace=True)
+    # test_outliers_df = pd.concat([df, cfdf], ignore_index=True, axis=0)
+    # list_of_outliers = self.MD_removeOutliers(test_outliers_df)  # this should be the concat of the CFS and actual test instances
+    # print("OUTLIER INSTANCES WITH MD:", list_of_outliers)
+    return cfdf, two_feature_explore
 
-                elif (f1 in numf and f2 in u_cat_f_list) and f1 and f2 not in protected_features:  # num -> cat (binary classification)
-
-                    if f1 and f2 in user_term_intervals.keys():
-                        interval_term_range1 = user_term_intervals[f1]
-                        start1 = int(interval_term_range1[0])
-                        end1 = int(interval_term_range1[1])
-                        log_model, ba = self.catclassifyModel(df, f1, f2)
-                        #log_model, ba = self.catclassifyModel_confined(df, f1, user_term_intervals[f1], f2)
-                        if isinstance(start1, int) and isinstance(end1, int):
-                            f1_space = [item for item in range(start1, end1 + 1)]
-                        else:
-                            f1_space = sorted(np.round(random.uniform(start1, end1), 2) for _ in range(8))
-                        if ba >= 0.8:
-                            while len(f1_space) != 0:
-                                low = 0
-                                high = len(f1_space) - 1
-                                mid = (high - low) // 2
-                                tempdf1.loc[:, f1] = f1_space[mid]
-                                temptempdf = tempdf1.copy()
-                                tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
-                                f2_val = log_model.predict(tempdf1.values)
-                                if f2 == 'CCAvg':
-                                    temptempdf.loc[:, f2] = f2_val[0]
-                                else:
-                                    temptempdf.loc[:, f2] = float(int(f2_val[0]))
-                                if f2_val >= df[f2].min() and f2_val <= df[f2].max():
-                                    two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True,
-                                                                    axis=0)
-                                    pred = model.predict(temptempdf)
-                                    if pred == desired_outcome:  #
-                                        cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
-                                        iter += 1
-                                try:
-                                    del f1_space[:mid+1]
-                                except:
-                                    pass
-                elif (f1 in u_cat_f_list and f2 in numf) and (f1 and f2 not in protected_features): # cat and num
-                    if f1 and f2 in user_term_intervals.keys():
-                        temptempdf = tempdf1.copy()
-                        tempdf1.loc[:, f1] = user_term_intervals[f1][1] #0.0 if tempdf1.loc[:, f1].values else 1.0
-                        reg_model, mse, rmse = self.regressionModel(df, f1, f2)
-                        if mse > 0.5:
-                            tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
-                            f2_val = reg_model.predict(tempdf1.values)
-                            if f2 == 'CCAvg':
-                                temptempdf.loc[:, f2] = f2_val[0]
-                            else:
-                                temptempdf.loc[:, f2] = float(int(f2_val[0]))
-                            two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0,
-                                                           sort=False)
-                            if df[f2].min() <= int(f2_val[0]) <= df[f2].max():  # f2_val >= start2 and f2_val <= end2:
-                                pred = model.predict(temptempdf)
-                                if pred == desired_outcome:
-                                    cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
-                                    iter += 1
-                else:
-                    print("could'nt found counterfactuals for the features: ", f1, f2)
-        #if len(cfdf) != 0:
-        #    cfdf.drop_duplicates(inplace=True)
-        # test_outliers_df = pd.concat([df, cfdf], ignore_index=True, axis=0)
-        # list_of_outliers = self.MD_removeOutliers(test_outliers_df)  # this should be the concat of the CFS and actual test instances
-        # print("OUTLIER INSTANCES WITH MD:", list_of_outliers)
-        return cfdf, two_feature_explore
-
-    def three_feature_update_corr_reg_binsearch(self, df, test_instance, protected_features, feature_pairs, u_cat_f_list, numf, user_term_intervals, features_2change, perturbing_rates, model, desired_outcome, k):
+    def Triple_F(self, df, test_instance, protected_features, feature_pairs, u_cat_f_list, numf, user_term_intervals, features_2change, model, desired_outcome):
         """
         :param df:
         :param test_instance:
@@ -701,10 +582,8 @@ class UFCE():
         :param numf:
         :param user_term_intervals:
         :param features_2change:
-        :param perturbing_rates:
         :param model:
         :param desired_outcome:
-        :param k:
         :return:
         """
         count = 0
@@ -1091,6 +970,7 @@ class UFCE():
 
     def avg_nbr_changes_per_cfn(self, x, cf_list, continuous_features):
         return np.mean(self.nbr_changes_per_cfn(x, cf_list, continuous_features))
+     
     def sparsity_count(self, cfdf, K, Xtest, cont_features):
         """
         :param path_to_cfdf:
@@ -1110,7 +990,6 @@ class UFCE():
         else:
             return tempone, result
 
-        
     def nbr_actionable_cfn(self, x, cf_list, features, variable_features):
         """
         :param x:
