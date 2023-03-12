@@ -67,7 +67,7 @@ onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X,
 print(display(onecfs[:1]) #counterfactuals from ufce1
 ```
 
-Double feature change
+Double feature counterfactuals
 ```python
 no_cf_exp = 1
 # this calls to Doule_F method
@@ -82,7 +82,7 @@ twocfs, methodtimes[i], foundidx2, interval2, testout2 = dfexp(X, data_lab1,
 print(display(twocfs[:1]) #counterfactuals from ufce2
 ```
 
-Tripple feature change
+Tripple feature counterfactuals
 ```python
 no_cf_exp = 1
 # this calls to Triple_F method
