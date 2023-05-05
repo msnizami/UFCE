@@ -328,6 +328,7 @@ class UFCE():
         :param: end: end value
         :param model: ML blackbox
         :return pred, tempdf: prediction and related dataframe
+        """
         # If found at mid, then return it
         tempdf.loc[:, feature] = mid
         pred = model.predict(tempdf)
@@ -819,9 +820,11 @@ class UFCE():
         l1_diff_mad = l1_diff / mad
         return l1_diff_mad.sum()
 
-    # this function is customised according to our needs, the orginal source of these functions belongs to:
+    # In following some functions are customised according to our needs, the orginal source of these functions belongs to:
     #"Guidotti, R. Counterfactual explanations and how to find them: literature review and benchmarking. Data Min Knowl Disc (2022). https://doi.org/10.1007/s10618-022-00831-6
+    
     # Begin> 3rd party adapted ///////
+    
     def continuous_distance(self, x, cf_list, continuous_features, metric='euclidean', X=None, agg=None):
         """
         :param x:
@@ -1009,6 +1012,7 @@ class UFCE():
             return tempone, result / K
         else:
             return tempone, result
+    
     # End> 3rd party adapted ///////
     
     def diverse_CFs(self, test, nn_valid, uf, c_f):
@@ -1032,6 +1036,7 @@ class UFCE():
         return cfs
 
     # Begin> 3rd party adapted ///////
+    
     def count_diversity(self, cf_list, features, nbr_features, continuous_features):
         """
         :param cf_list:
