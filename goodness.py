@@ -9,6 +9,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import LocalOutlierFactor
 
+# In following some functions are customised according to our needs, the orginal source of these functions belongs to:
+#"Guidotti, R. Counterfactual explanations and how to find them: literature review and benchmarking. Data Min Knowl Disc (2022). https://doi.org/10.1007/s10618-022-00831-6
+    
+# Begin> 3rd party adapted ///////
 
 def nbr_valid_cf(cf_list, b, y_val, y_desired=None):
     """
@@ -52,7 +56,6 @@ def nbr_actionable_cf(x, cf_list, features, variable_features):
             if cf[j] != x[j].values and j in variable_features:
                 nbr_actionable += 1
     return nbr_actionable/cf_list.shape[0]
-
 
 def number_of_diff(df1, df2):
     differences = 0
@@ -196,6 +199,7 @@ def distance_l2j(x, cf_list, continuous_features, categorical_features, ratio_co
         ratio_categorical = 1.0 - ratio_cont
     dist = ratio_continuous * dist_cont + ratio_categorical * dist_cate
     return dist
+# End> 3rd party adapted ///////
 
 def merge_dictionaries(dict1, dict2):
     """
@@ -214,6 +218,8 @@ def merge_dictionaries(dict1, dict2):
         merged_dictionary[key] = new_value
 
     return merged_dictionary
+
+# Begin> 3rd party adapted ///////
 
 def distance_mh(x, cf_list, continuous_features, categorical_features, X, ratio_cont=None, agg=None):
     """
@@ -237,6 +243,7 @@ def distance_mh(x, cf_list, continuous_features, categorical_features, X, ratio_
         ratio_categorical = 1.0 - ratio_cont
     dist = ratio_continuous * dist_cont + ratio_categorical * dist_cate
     return dist
+# End> 3rd party adapted ///////
 
 #cf feature changes and avg change
 def nbr_changes_per_cf(x, cf_list, continuous_features):
@@ -254,6 +261,7 @@ def nbr_changes_per_cf(x, cf_list, continuous_features):
                 nbr_changes[i] += 1 if j in continuous_features else 0.5
     return nbr_changes
 
+# Begin> 3rd party adapted ///////
 
 def avg_nbr_changes_per_cf(x, cf_list, continuous_features):
     return np.mean(nbr_changes_per_cf(x, cf_list, continuous_features))
@@ -342,8 +350,9 @@ def diversity_mh(cf_list, continuous_features, categorical_features, X, ratio_co
     dist = ratio_continuous * dist_cont + ratio_categorical * dist_cate
     return dist
 
+# End> 3rd party adapted ///////
 
-#new updated methods
+
 def count_diversity(cf_list, features, nbr_features, continuous_features):
     """
     :param cf_list:
@@ -361,6 +370,8 @@ def count_diversity(cf_list, features, nbr_features, continuous_features):
                     nbr_changes += 1 if j in continuous_features else 0.5
                 #print("value change is ", nbr_changes)
     return nbr_changes / (nbr_cf * nbr_cf * nbr_features) if nbr_changes != 0 else 0.0
+
+# Begin> 3rd party adapted ///////
 
 def count_diversity_all(cf_list, nbr_features, continuous_features):
     """
@@ -391,11 +402,9 @@ def nbr_changes_per_cf(x, cf_list, continuous_features):
 
 def avg_nbr_changes_per_cf(x, cf_list, continuous_features):
     return np.mean(nbr_changes_per_cf(x, cf_list, continuous_features))
-#end here new methods
 
 def count_diversity_all(cf_list, nbr_features, continuous_features):
     return count_diversity(cf_list, range(cf_list.shape[1]), nbr_features, continuous_features)
-
 
 def euclidean_jaccard(x, A, continuous_features, categorical_features, ratio_cont=None):
     nbr_features = A.shape[1]
@@ -422,4 +431,5 @@ def lof(x, cf_list, X, scaler):
     lof_values = clf.predict(ncf_list)
     print("lof here:", lof_values)
     return np.mean(np.abs(lof_values))
+# End> 3rd party adapted ///////
 
