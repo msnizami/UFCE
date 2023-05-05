@@ -51,17 +51,6 @@ from generate_text_explanations import *
 ufc = UFCE()
 
 
-# outcome_var = "The personal loan"
-# actual_class = 'denied'
-# desired_class = 'accepted'
-
-# generating natural language explanations
-
-# features, new_values, actual_values = features_to_explain(test, cf1)
-# generate_reason_explanation(outcome_var, desired_class, actual_class, features)
-# generate_suggestion_explanation(outcome_var, desired_class, actual_class, features, new_values, actual_values)
-
-
 # ### Complete experiment
 
 datasets = {'grad':'grad.csv', 'bupa':'bupa.csv', 'bank':'bank.csv', 'wine':'wine.csv', 'movie':'movie.csv' }
@@ -88,7 +77,7 @@ for dataset in datasets.keys():
         writepath = r'C:\Users\~\folds\grad\totest\\'
         features, catf, numf, uf, f2change, outcome_label, desired_outcome, nbr_features, protectf, data_lab0, data_lab1 = get_grad_user_constraints(datasetdf)
     elif dataset == 'wine':
-        # readpath = r'/home/~/folds/wine/' # for gpu
+        # readpath = r'/home/~/folds/wine/' # for ubuntu
         # writepath = r'/home/~/folds/wine/totest/'
         readpath = r'C:\Users\~\folds\wine\\'
         writepath = r'C:\Users\~\folds\wine\totest\\'
@@ -100,8 +89,8 @@ for dataset in datasets.keys():
         writepath = r'C:\Users\~\folds\bupa\totest\\'
         features, catf, numf, uf, f2change, outcome_label, desired_outcome, nbr_features, protectf, data_lab0, data_lab1 = get_bupa_user_constraints(datasetdf)
     else:
-        # readpath = r'/home/~/folds/movie/' # for gpu
-        # writepath = r'/home/~/folds/totest/' # for gpu
+        # readpath = r'/home/~/folds/movie/' # for ubuntu
+        # writepath = r'/home/~/folds/totest/' # for ubuntu
         readpath = r'C:\Users\~\folds\movie\\'
         writepath = r'C:\Users\~\folds\movie\totest\\'
         features, catf, numf, uf, f2change, outcome_label, desired_outcome, nbr_features, protectf, data_lab0, data_lab1 = get_movie_user_constraints(datasetdf)
@@ -162,52 +151,34 @@ for dataset in datasets.keys():
                 for i, method in enumerate(cfmethods):
                     print(f'\t\t\t\t Method: {method}  --------------')
                     if method == 'DiCE':
-                        dicecfs, methodtimes[i] = dice_cfexp(datasetdf, testset[:5], numf, f2change, outcome_label, k, bb)
+                        dicecfs, methodtimes[i] = dice_cfexp(datasetdf, testset[:], numf, f2change, outcome_label, k, bb)
                         del dicecfs[outcome_label]
                         # print(f'\t\t\t\t Counterfactuals \t:{dicecfs.values}')
                     elif method == 'AR':
                         if model == mlp:
                             pass
                         else:
-                            arcfs, methodtimes[i] = ar_cfexp(X, numf, bb, testset[:20])
+                            arcfs, methodtimes[i] = ar_cfexp(X, numf, bb, testset[:])
                         #     # print(f'\t\t\t\t Counterfactual \t:{arcfs.values}')
                     elif method == 'UFCE1':
-                        onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X, data_lab1, testset[:5], uf, f2change, numf, catf, bb, desired_outcome, k)
+                        onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X, data_lab1, testset[:], uf, step, f2change, numf, catf, bb, desired_outcome, k)
                         # for id in foundidx1:
                         #     print(f'\t\t\t\t{id} Test instance \t:{testset[id:id+1].values}')
                         #     print(f'\t\t\t\t UF with MC \t:{interval1[id]}')
                         #     print(f'\t\t Counterfactual \t:{onecfs[id:id+1].values}')
                     elif method == 'UFCE2':
-                        twocfs, methodtimes[i], foundidx2, interval2, testout2 = dfexp(X, data_lab1, testset[:5], uf, MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
+                        twocfs, methodtimes[i], foundidx2, interval2, testout2 = dfexp(X, data_lab1, testset[:], uf, MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
                         # for id in foundidx2:
                         #     print(f'\t\t\t\t{id} Test instance \t:{testset[id:id + 1].values}')
                         #     print(f'\t\t\t\t UF with MC \t:{interval2[id]}')
                         #     print(f'\t\t\t\t Counterfactual \t:{twocfs[id:id + 1].values}')
                     else:
-                        threecfs, methodtimes[i], foundidx3, interval3, testout3 = tfexp(X, data_lab1, testset[:5], uf, MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
+                        threecfs, methodtimes[i], foundidx3, interval3, testout3 = tfexp(X, data_lab1, testset[:], uf, MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
                         # for id in foundidx3:
                         #     print(f'\t\t{id} Test instance \t:{testset[id:id + 1].values}')
                         #     print(f'\t\t UF with MC \t:{interval3[id]}')
                         #     print(f'\t\t Counterfactual \t:{threecfs[id:id + 1].values}')
 
-                # Generate diverse counterfactuals open the following loc
-                # if we constrained uf too much then higher is the likelihood that we dont find counterfactuals.
-                # uf1 = {'GRE Score':10, 'TOEFL Score':5, 'University Rating':2, 'SOP':2,'LOR':2, 'CGPA':2, 'Research':1}
-                # uf2 = {'GRE Score':20, 'TOEFL Score':10, 'University Rating':3, 'SOP':3,'LOR':3, 'CGPA':3, 'Research':1}
-                # uf3 = {'GRE Score':30, 'TOEFL Score':15, 'University Rating':4, 'SOP':4,'LOR':4, 'CGPA':4, 'Research':1}
-                # uf1 = {'Income': 30, 'CCAvg': 2.0, 'Family': 1, 'Education': 1, 'Mortgage': 50, 'CDAccount': 1, 'Online': 1,'SecuritiesAccount': 1, 'CreditCard': 1}
-                # uf2 = {'Income': 50, 'CCAvg': 3.0, 'Family': 2, 'Education': 2, 'Mortgage': 100, 'CDAccount': 1, 'Online': 1,'SecuritiesAccount': 1, 'CreditCard': 1}
-                # uf3 = {'Income': 70, 'CCAvg': 4.0, 'Family': 3, 'Education': 3, 'Mortgage': 150, 'CDAccount': 1, 'Online': 1,'SecuritiesAccount': 1, 'CreditCard': 1}
-                # ufs = [uf1, uf2, uf3]
-                # print(f'\t User feedback Analysis')
-                # for i in range(len(testset)):
-                #     print(f'\t Test Instance no. {i}\n', testset[i:i+1].to_latex())
-                #     for j, u in enumerate(ufs):
-                #         cf, interval1, interval2 = ufce_diverse(X, data_lab1, testset[i:i+1], u, MI_FP, numf, catf, features, f2change, protectf, bb, desired_outcome, k)
-                #         print(f'\t\t user feedback {j} is: {u}')
-                #         print(f'\t\t Search space for 1F is: {interval1}')
-                #         print(f'\t\t Search space for 2-3F is: {interval2}')
-                #         print(f'\t\t\t found counterfactuals are\n:{cf.to_latex()}')
 
                 # calling all 7 evaluation metrics (properties)
                 # joint proximity
