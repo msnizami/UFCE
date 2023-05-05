@@ -50,6 +50,7 @@ from generate_text_explanations import *
 
 ufc = UFCE()
 
+# this file contain the experiment code for user-feedback analysis with different levels of user-constraints, specificaly customised for Bank Loan dataset.
 
 def compute_percentage_for_uf_analysis(df, f2c,fcat, seed):
     # Compute the median absolute deviation of each feature
@@ -81,27 +82,33 @@ def modify_testinstance(test, cf, uf):
 
 
 # #### Read data
-#path = r'/home/m.suffian/Downloads/UFCE-4GPU (4)/data/'  # use this path on ubuntu. make sure you have correct path to UFCE folder.
-path = r'C:\Users\laboratorio\Documents\Suffian PhD Work\codes\UFCE-4GPU\data' # use this path on windows system
-pathbank = r'C:\Users\laboratorio\Documents\Suffian PhD Work\codes\UFCE-4GPU\data\bank.csv'
-#datafile = datasets[dataset]
+#path = r'/home/m.suffian/Downloads/UFCE-4GPU/data/'  # use this path on ubuntu. make sure you have correct path to UFCE folder.
+path = r'C:\Users\~\UFCE-4GPU\data' # use this path format on windows system, verify your drive path to UFCE
+pathbank = r'C:\Users\~\UFCE-4GPU\data\bank.csv'
 datasetdf = pd.read_csv(pathbank)
 datasetdf = datasetdf.sample(frac=1)
 # print(datasetdf.mad(), datasetdf.std())
+
 mlp, mlp_mean, mlp_std, lr, lr_mean, lr_std, Xtest, Xtrain, X, Y, df = classify_dataset_getModel(datasetdf[:200], data_name='bank') # this method returns trained ML model's, cleaned dataframe, and etc.
 models = {lr: [lr_mean, lr_std]} #, mlp: [mlp_mean, mlp_std]}
+
 print(f'Bank Dataset')
-readpath = r'C:\Users\laboratorio\Documents\Suffian PhD Work\codes\UFCE-4GPU\folds\bank\totest\testfold_0_pred_0.csv'
-writepath = r'C:\Users\laboratorio\Documents\Suffian PhD Work\codes\UFCE-4GPU\folds\bank\totest\\'
+
+readpath = r'C:\Users\~\UFCE-4GPU\folds\bank\totest\testfold_0_pred_0.csv'
+writepath = r'C:\Users\~\UFCE-4GPU\folds\bank\totest\\'
 features, catf, numf, uf, f2change, outcome_label, desired_outcome, nbr_features, protectf, data_lab0, data_lab1 = get_bank_user_constraints(df) # this will return user-constraints specific to data set.
 # del data_lab1['Unnamed: 0']
 # del data_lab1['age']
 # del data_lab1['Experience']
+
 # Take top mutual information sharing pairs of features
 MI_FP = ufc.get_top_MI_features(X, features)
 print(f'\t Top-5 Mutually-informed feature paris:{MI_FP[:5]}')
+
 f2change = ['Income', 'CCAvg', 'Mortgage', 'Education']
 f2cat = ['CDAccount', 'Online']
+
+# different levels of values (specific percentage of MAD represents to a diferent user value)
 uf1 = compute_percentage_for_uf_analysis(df, f2change, f2cat, 0.20) # 20% of mad
 uf2 = compute_percentage_for_uf_analysis(df, f2change, f2cat, 0.40) # 40% of mad
 uf3 = compute_percentage_for_uf_analysis(df, f2change, f2cat, 0.60) # 60% of mad
@@ -109,7 +116,7 @@ uf4 = compute_percentage_for_uf_analysis(df, f2change, f2cat, 0.80) # 80% of mad
 uf5 = compute_percentage_for_uf_analysis(df, f2change, f2cat, 1.0) # # 100% of mad
 ufs = [uf1, uf2, uf3, uf4, uf5]
 print(ufs)
-models = ['lr'] # the experiment is run for 'lr' as AR method doesn't work on 'mlp'
+models = ['lr'] # the experiment is run for 'lr' (Logistic Regression) as AR method doesn't work on 'mlp'
 
 mnames = ['ufce1','ufce2', 'ufce3', 'dice', 'ar']
 percent_cfs_all = pd.DataFrame()
