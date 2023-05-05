@@ -12,41 +12,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, cross_val_score
 
-def get_model_lr():
-    lg_bank = pickle.load(open('lg_model_bank.sav', 'rb'))
-    lg_credit = pickle.load(open('lg_model_credit.sav', 'rb'))
-    lg_adult = pickle.load(open('lg_model_adult.sav', 'rb'))
-    lg_append = pickle.load(open('lg_model_appendicitis.sav', 'rb'))
-    lg_bupa = pickle.load(open('lg_model_bupa.sav', 'rb'))
-    lg_heart = pickle.load(open('lg_model_heart.sav', 'rb'))
-    #lg_magic = pickle.load(open('lg_model_magic.sav', 'rb'))
-    lg_movie = pickle.load(open('lg_model_movie.sav', 'rb'))
-    lg_mammo = pickle.load(open('lg_model_mammo.sav', 'rb'))
-    lg_saheart = pickle.load(open('lg_model_saheart.sav', 'rb'))
-    lg_spotify = pickle.load(open('lg_model_spotify.sav', 'rb'))
-    lg_titanic = pickle.load(open('lg_model_titanic.sav', 'rb'))
-    lg_wdbc = pickle.load(open('lg_model_wdbc.sav', 'rb'))
-    lg_wine = pickle.load(open('lg_model_wine-red.sav', 'rb'))
-    lg_wiscon = pickle.load(open('lg_model_wisconsin.sav', 'rb'))
-    return lg_bank, lg_credit, lg_adult, lg_append, lg_bupa, lg_heart, lg_movie, lg_mammo, lg_saheart, lg_spotify, lg_titanic, lg_wdbc, lg_wine, lg_wiscon
-
-def get_model_mlp():
-    mlp_bank = pickle.load(open('mlp_model_bank.sav', 'rb'))
-    mlp_credit = pickle.load(open('mlp_model_credit.pkl', 'rb'))
-    mlp_adult = pickle.load(open('mlp_model_adult.sav', 'rb'))
-    mlp_append = pickle.load(open('mlp_model_appendicitis.sav', 'rb'))
-    mlp_bupa = pickle.load(open('mlp_model_bupa.sav', 'rb'))
-    mlp_heart = pickle.load(open('mlp_model_heart.sav', 'rb'))
-    # lg_magic = pickle.load(open('lg_model_magic.sav', 'rb'))
-    mlp_movie = pickle.load(open('mlp_model_movie.sav', 'rb'))
-    mlp_mammo = pickle.load(open('mlp_model_mammo.sav', 'rb'))
-    mlp_saheart = pickle.load(open('mlp_model_saheart.sav', 'rb'))
-    mlp_spotify = pickle.load(open('mlp_model_spotify.sav', 'rb'))
-    mlp_titanic = pickle.load(open('mlp_model_titanic.sav', 'rb'))
-    mlp_wdbc = pickle.load(open('mlp_model_wdbc.sav', 'rb'))
-    mlp_wine = pickle.load(open('mlp_model_wine-red.sav', 'rb'))
-    mlp_wiscon = pickle.load(open('mlp_model_wisconsin.sav', 'rb'))
-    return mlp_bank, mlp_credit, mlp_adult,  mlp_append, mlp_bupa, mlp_heart, mlp_movie, mlp_mammo, mlp_saheart, mlp_spotify, mlp_titanic, mlp_wdbc, mlp_wine, mlp_wiscon
 
 def classify_dataset_getModel(dataset_df, data_name=''):
     """
@@ -81,11 +46,6 @@ def classify_dataset_getModel(dataset_df, data_name=''):
         # del dataset_df['Unnamed: 0']
         X = dataset_df.loc[:, dataset_df.columns != 'Selector']
         y = dataset_df['Selector']
-    elif data_name == 'adult':
-        dataset_df.reset_index(drop=True, inplace=True)
-        del dataset_df['Unnamed: 0']
-        X = dataset_df.loc[:, dataset_df.columns != 'class']
-        y = dataset_df['class']
 
     # train-test splits with a random state that provides the best distribution fit of data
     n_features = X.shape[1]
@@ -138,6 +98,8 @@ def get_bank_user_constraints(bankloan):
     numf = ['Income', 'Family', 'CCAvg', 'Education', 'Mortgage']
     uf = {'Income': 70, 'CCAvg': 3.0, 'Family': 3, 'Education': 3, 'Mortgage': 100, 'CDAccount': 1, 'Online': 1,
           'SecuritiesAccount': 1, 'CreditCard': 1}
+    step = {'Income': 1, 'CCAvg': 0.1, 'Family': 1, 'Education': 1, 'Mortgage': 1, 'CDAccount': 1, 'Online': 1,
+         'SecuritiesAccount': 1, 'CreditCard': 1}
     # uf  = getMCSvalues()
     f2change = ['Income', 'CCAvg', 'Mortgage', 'CDAccount', 'Online']
     outcome_label = 'Personal Loan'
@@ -164,6 +126,8 @@ def get_grad_user_constraints(grad):
        'LOR', 'CGPA']
     uf = {'GRE Score':20, 'TOEFL Score':10, 'University Rating':3, 'SOP':2,
        'LOR':2, 'CGPA':5, 'Research':1}
+    step = {'GRE Score': 1, 'TOEFL Score': 1, 'University Rating': 1, 'SOP': 1,
+          'LOR': 1, 'CGPA': 0.1, 'Research': 1}
     # uf  = getMCSvalues()
     f2change = ['GRE Score', 'TOEFL Score', 'University Rating', 'SOP',
        'LOR', 'CGPA', 'Research']
@@ -191,6 +155,8 @@ def get_wine_user_constraints(wine):
                'chlorides', 'free sulfur dioxide', 'total sulfur dioxide', 'density',
                'pH', 'sulphates', 'alcohol']
     uf = {'fixed acidity':3.0, 'residual sugar':3.0, 'free sulfur dioxide':8.0, 'total sulfur dioxide':12.0, 'pH':1.0, 'alcohol':2.0, 'density':0.20, 'volatile acidity':0.20, 'citric acid':0.8}
+    step = {'fixed acidity': 0.5, 'residual sugar': 0.5, 'free sulfur dioxide': 1.0, 'total sulfur dioxide': 1.0,
+          'pH': 0.5, 'alcohol': 0.5, 'density': 0.1, 'volatile acidity': 0.10, 'citric acid': 0.1}
     # uf  = getMCSvalues()
     f2change = ['fixed acidity', 'residual sugar', 'free sulfur dioxide', 'total sulfur dioxide', 'pH', 'alcohol', 'density', 'volatile acidity']
     outcome_label = 'quality'
@@ -213,6 +179,7 @@ def get_bupa_user_constraints(bupa):
     catf = []
     numf = ['Mcv', 'Alkphos', 'Sgpt', 'Sgot', 'Gammagt', 'Drinks']
     uf = {'Mcv':20, 'Alkphos':15, 'Sgpt':15, 'Sgot':15, 'Gammagt':15, 'Drinks':2}
+    step = {'Mcv': 1, 'Alkphos': 1, 'Sgpt': 1, 'Sgot': 1, 'Gammagt': 1, 'Drinks': 1}
     # uf  = getMCSvalues()
     f2change = ['Sgpt', 'Sgot', 'Gammagt']
     outcome_label = 'Selector'
@@ -243,6 +210,9 @@ def get_movie_user_constraints(movie):
                'Avg_age_actors', 'Num_multiplex', 'Collection']
     uf = {'Production expense': 40, 'Num_multiplex':50,'Multiplex coverage':0.4, 'Movie_length':35, 'Lead_ Actor_Rating':4.0, 'Lead_Actress_rating':4.0,
                'Director_rating':4.0, 'Producer_rating':4.0, 'Genre':3, 'Collection':20000}
+    step = {'Production expense': 5, 'Num_multiplex': 5, 'Multiplex coverage': 0.2, 'Movie_length': 10,
+          'Lead_ Actor_Rating': 1.0, 'Lead_Actress_rating': 1.0,
+          'Director_rating': 1.0, 'Producer_rating': 1.0, 'Genre': 1, 'Collection': 5000}
     # uf  = getMCSvalues()
     f2change = ['Production expense', 'Multiplex coverage','Num_multiplex', 'Movie_length', 'Lead_ Actor_Rating', 'Lead_Actress_rating',
                'Director_rating', 'Producer_rating', 'Genre', 'Collection']
