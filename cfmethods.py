@@ -75,12 +75,13 @@ def ar_cfexp(X, numf, bb, X_test):
     print('\t\t AR time:', artime)
     return ar_cfs, artime
 
-def sfexp(X, data_lab1, X_test, uf, f2change, numf, catf, bb, desired_outcome, k):
+def sfexp(X, data_lab1, X_test, uf, step, f2change, numf, catf, bb, desired_outcome, k):
     """
     :param X:
     :param data_lab1:
     :param X_test:
     :param uf:
+    :param step:
     :param f2change:
     :param numf:
     :param catf:
@@ -99,11 +100,11 @@ def sfexp(X, data_lab1, X_test, uf, f2change, numf, catf, bb, desired_outcome, k
         nn, idx = ufc.NNkdtree(data_lab1, X_test[t:t+1], 100) #increase radius size as per the dataset
         if nn.empty != True:
             interval = ufc.make_intervals(nn, uf, f2change, X_test[t:t+1])
-            cc = ufc.Single_F(X_test[t:t+1], catf, interval, bb, desired_outcome)
+            cc = ufc.Single_F(X_test[t:t+1], catf, interval, bb, desired_outcome, step)
             while cc.empty == True:
                 n = n+1
                 interval = ufc.make_intervals(nn, uf, f2change, X_test[t:t+1])
-                cc = ufc.Single_F(X_test[t:t+1], catf, interval, bb, desired_outcome)
+                cc = ufc.Single_F(X_test[t:t+1], catf, interval, bb, desired_outcome, step)
                 if n >= 10:
                     break
             if cc.empty != True:
@@ -209,77 +210,4 @@ def tfexp(X, data_lab1, X_test, uf, F, numf, catf, features, protectdf, bb, desi
         threetime = threetime / len(X_test)
     print('ufce3 time:', threetime)
     return threeF_cfdf, threetime, foundidx, intervald, testout
-
-def ufce_diverse(X, data_lab1, X_test, uf, F, numf, catf, features,f2change, protectdf, bb, desired_outcome, k):
-    """
-    :param X:
-    :param data_lab1:
-    :param X_test:
-    :param uf:
-    :param F: feature pairs
-    :param numf:
-    :param catf:
-    :param features:
-    :param f2change:
-    :param protectdf:
-    :param bb: black box
-    :param desired_outcome:
-    :param k:
-    :return:
-    """
-    start = time.time()
-    perturb_step = {}
-    c = pd.DataFrame()
-    nn, idx = ufc.NNkdtree(data_lab1, X_test, 100)  # increase radius size as per the dataset
-    if nn.empty != True:
-        interval1 = ufc.make_intervals(nn, uf, f2change, X_test)
-        interval2 = ufc.make_uf_nn_interval(nn, uf, F[:5], X_test)
-        t1 = ufc.Single_F(X_test, catf, interval1, bb, desired_outcome)
-        if t1.empty != True:
-            c = pd.concat([c, t1[:1]], ignore_index=True, axis=0)
-        t2, explore2 = ufc.Double_F(X, X_test, protectdf, F[:5], catf, numf, interval2, features, bb, desired_outcome)
-        if t2.empty != True:
-            c = pd.concat([c, t2[:1]], ignore_index=True, axis=0)
-            t2d, explore2d = ufc.Double_F(X, X_test, protectdf, F[2:5], catf, numf,
-                                                                     interval2, features, bb,
-                                                                     desired_outcome)
-            if t2d.empty != True:
-                flag = check_two_different_feature_changes(X_test, t2, t2d)
-                if flag:
-                    c = pd.concat([c, t2d[:1]], ignore_index=True, axis=0)
-        t3, explore3 = ufc.Triple_F(X, X_test, protectdf, F[:5], catf, numf, interval2, features, bb, desired_outcome)
-        if t3.empty != True:
-            c = pd.concat([c, t3[:1]], ignore_index=True, axis=0)
-    else:
-        print(f' The neighbourhood is too small to find diverse counterfactuals.')
-    return c, interval1, interval2
-
-def diverse_cfs(data_lab1, X_test, test_instance, n):
-    """
-    :param data_lab1:
-    :param X_test:
-    :param test_instance:
-    :param n:
-    :return:
-    """
-    df, idx = ufc.NNkdtree(data_lab1, X_test, 100)
-    diff = (df.astype(float) - test_instance).abs().sum(axis=1)
-    # sort the data points by the number of feature changes
-    diff_sorted = diff.sort_values()
-    # return the top n data points with the least number of feature changes
-    return df.loc[diff_sorted.index[:n]]
-
-def check_two_different_feature_changes(data_point1, data_point2, other_data_point):
-    """
-    :param data_point1: cf1
-    :param data_point2: cf2
-    :param other_data_point: test instance
-    :return:
-    """
-    num_changes1 = sum(1 for f1, f2 in zip(data_point1, other_data_point) if f1 != f2)
-    num_changes2 = sum(1 for f1, f2 in zip(data_point2, other_data_point) if f1 != f2)
-    different_features1 = set(i for i, (a, b) in enumerate(zip(data_point1, other_data_point)) if a != b)
-    different_features2 = set(i for i, (a, b) in enumerate(zip(data_point2, other_data_point)) if a != b)
-    num_different_features = len(different_features1.union(different_features2))
-    return num_changes1 >= 2 and num_changes2 >= 2 and num_different_features >= 2
 
