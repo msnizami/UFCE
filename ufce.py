@@ -59,8 +59,6 @@ class UFCE():
                 test_instance.loc[:, feature] = 1.0
         return test_instance
 
-    
-# The functionality for updated approach v1.3 starts from here
 
     def barplot(self, methods, means, x_pos, serror, title, ylabel, path, save=False):
         """
@@ -88,7 +86,6 @@ class UFCE():
             plt.savefig(path, dpi=400, bbox_inches="tight")
         plt.show()
 
-    # Taking individual scores
     def make_mi_scores(self, X, y, discrete_features):
         """
         :param X: features in the data set
@@ -116,9 +113,9 @@ class UFCE():
         
     def CF_Gower_dist(self, test, cf):
         """
-        :param test:
-        :param cf:
-        :return:
+        :param test: test instance
+        :param cf: counterfactual
+        :return: distance between test instance and counterfactual
         """
         distance = 0
         X = pd.concat([test, cf], ignore_index=True, axis=0)
@@ -321,76 +318,61 @@ class UFCE():
                 faithful_interval[f2] = [test[f2].values[0], f2_end]
         return faithful_interval
 
-    # def diverse_CFs(test, nn_valid, uf, c_f):
-    #     """
-    #     test: test instance
-    #     nn_valid: valid nearest neighbors (df)
-    #     uf: user feedback (dict)
-    #     c_f: changeable features (dict)
-    #     """
-    #     cfs = pd.DataFrame()
-    #     #for f in changeable_f:
-    #     # print(test[c_f[0]].values[0], (test[c_f[0]].values + uf[c_f[0]])[0])
-    #     # nn_d = nn[nn[c_f[0]].between(test[c_f[0]].values[0], (test[c_f[0]].values + uf[c_f[0]])[0])]
-    #     # nn_d = nn_d[nn_d[c_f[1]].between(test[c_f[1]].values[0], (test[c_f[1]].values + uf[c_f[1]])[0])]
-    #     # nn_d = nn_d[nn_d[c_f[2]].between(test[c_f[2]].values[0], (test[c_f[2]].values + uf[c_f[2]])[0])]
-    #     # nn_d = nn_d[nn_d[c_f[3]].between(test[c_f[3]].values[0], (test[c_f[3]].values + uf[c_f[3]])[0])]
-    #     cfs = nn_valid
-    #     for i in range(len(c_f)):
-    #         cfs = cfs[cfs[c_f[i]].between(test[c_f[i]].values[0], (test[c_f[i]].values + uf[c_f[i]])[0])]
-    #     return cfs
-
-    def Single_F(self, test_instance, u_cat_f_list, user_term_intervals, model, outcome):
+       
+    def pred_for_binsearch(self, tempdf, feature, start, mid, end, model):
         """
-
+        :param tempdf: a temporary dataframe
+        :param feature: feature
+        :param start: start value
+        :param mid: mid value
+        :param: end: end value
+        :param model: ML blackbox
+        :return pred, tempdf: prediction and related dataframe
+        # If found at mid, then return it
+        tempdf.loc[:, feature] = mid
+        pred = model.predict(tempdf)
+        return pred, tempdf
+       
+   
+    def Single_F(self, test_instance, u_cat_f_list, user_term_intervals, model, outcome, step):
+        """
         :param test_instance:
         :param u_cat_f_list:
-        :param user_term_intervals:
+        :param user_term_intervals: user defined values for each feature
         :param model:
         :param outcome:
-        :return:
+        :param step: values of feature distribution need to use in binary search for moving to next by adding this value 
+        :return cfdfout: single feature counterfactuals
         """
-        one_feature_dataframe = pd.DataFrame()
         cfdfout = pd.DataFrame()
         tempdf = pd.DataFrame()
         tempdfcat = pd.DataFrame()
-        one_all_explor = pd.DataFrame()
-        #tempdf = test_instance.copy()
-        found = 0
         
         for feature in user_term_intervals.keys():
             if feature not in u_cat_f_list:
-                i = 0
                 tempdf = test_instance.copy()
                 one_feature_data = pd.DataFrame()
                 interval_term_range = user_term_intervals[feature]
                 if len(interval_term_range) != 0 and interval_term_range[0] != interval_term_range[1]:
                     start = interval_term_range[0]
                     end = interval_term_range[1]
-                    # deciding next step of mid-value
-                    step = (end - start) / 1
-                    def perturb_binarySearch(model, outcome, start, end):
-                        if end >= start:
-                            cfdf = pd.DataFrame()
-                            mid = start + (end - start)/2
-                            # If found at mid, then return it
-                            tempdf.loc[:, feature] = mid
-                            #one_all_explor = pd.concat([one_all_explor, tempdf], ignore_index=True, axis=0)
-                            pred = model.predict(tempdf)
-                            if pred == outcome:
-                                cfdf = pd.concat([cfdf, tempdf], ignore_index=True, axis=0)
-                                #found = found + 1
-                                return cfdf
-                            # Search the right half
-                            else:
-                                return perturb_binarySearch(model, outcome, mid + step, end)
-                    #calling
-                    cfs = perturb_binarySearch(model, outcome, start, end)
-                    cfdfout = pd.concat([cfdfout, cfs], ignore_index=True, axis=0)
+                    step_size = step[feature]
+                    cfdf = pd.DataFrame()
+                    while start <= end:
+                        mid = round((start + (end - start) / 2), 2)
+                        pred, tempdf1 = self.pred_for_binsearch(tempdf, feature, start, mid, end, model)
+                        if pred == outcome:
+                            cfdf = tempdf1.copy()
+                            end = round((mid - step_size), 2)
+                        else:
+                            start = round((mid + step_size), 2)
+                    #print('cf from binsearch: ', cfdf)
+                    cfdfout = pd.concat([cfdfout, cfdf], ignore_index=True, axis=0)
             else:
+
                 tempdfcat = test_instance.copy()
                 tempdfcat.loc[:, feature] = 1.0 if tempdfcat.loc[:, feature].values else 1.0
-                one_all_explor = pd.concat([one_all_explor, tempdfcat], ignore_index=True, axis=0)
+                #one_all_explor = pd.concat([one_all_explor, tempdfcat], ignore_index=True, axis=0)
                 pred = model.predict(tempdfcat)
                 if pred == outcome:
                     cfdfout = pd.concat([cfdfout, tempdfcat], ignore_index=True, axis=0)
@@ -399,7 +381,7 @@ class UFCE():
     # Double-Feature
     def regressionModel(self, df, f_independent, f_dependent):
         """
-        :param df:
+        :param df: dataframe of data
         :param f_independent: training space
         :param f_dependent: feature whose value to predict
         :return:
@@ -485,7 +467,7 @@ class UFCE():
                             temptempdf = tempdf1.copy()
                             tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                             f2_val = reg_model.predict(tempdf1.values)
-                            if f2 == 'CCAvg':
+                            if isinstance(f2, float):
                                 temptempdf.loc[:, f2] = f2_val[0]
                             else:
                                 temptempdf.loc[:, f2] = float(int(f2_val[0]))
@@ -529,7 +511,7 @@ class UFCE():
                             temptempdf = tempdf1.copy()
                             tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                             f2_val = log_model.predict(tempdf1.values)
-                            if f2 == 'CCAvg':
+                            if isinstance(f2, float):
                                 temptempdf.loc[:, f2] = f2_val[0]
                             else:
                                 temptempdf.loc[:, f2] = float(int(f2_val[0]))
@@ -552,7 +534,7 @@ class UFCE():
                     if mse > 0.5:
                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                         f2_val = reg_model.predict(tempdf1.values)
-                        if f2 == 'CCAvg':
+                        if isinstance(f2, float):
                             temptempdf.loc[:, f2] = f2_val[0]
                         else:
                             temptempdf.loc[:, f2] = float(int(f2_val[0]))
@@ -623,7 +605,7 @@ class UFCE():
                             temptempdf = tempdf1.copy()
                             tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                             f2_val = reg_model.predict(tempdf1.values)
-                            if f2 == 'CCAvg':
+                            if isinstance(f2, float):
                                 temptempdf.loc[:, f2] = f2_val[0]
                             else:
                                 temptempdf.loc[:, f2] = float(int(f2_val[0]))
@@ -636,7 +618,7 @@ class UFCE():
                                             tempdf1 = temptempdf.copy()
                                             tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                             f3_val = reg_model_inner.predict(tempdf1.values)
-                                            if f3 == 'CCAvg':
+                                            if isinstance(f3, float):
                                                 temptempdf.loc[:, f3] = f3_val[0]
                                             else:
                                                 temptempdf.loc[:, f3] = float(int(f3_val[0]))
@@ -684,7 +666,7 @@ class UFCE():
                                     f3_val = reg_model_inner.predict(tempdf1.values)
                                 else:
                                     break
-                                if f3 == 'CCAvg':
+                                if isinstance(f3, float):
                                     temptempdf.loc[:, f3] = f3_val[0]
                                 else:
                                     temptempdf.loc[:, f3] = float(int(f3_val[0]))
@@ -733,7 +715,7 @@ class UFCE():
                             temptempdf = tempdf1.copy()
                             tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                             f2_val = log_model.predict(tempdf1.values)
-                            if f2 == 'CCAvg':
+                            if isinstance(f2, float):
                                 temptempdf.loc[:, f2] = f2_val[0]
                             else:
                                 temptempdf.loc[:, f2] = float(int(f2_val[0]))
@@ -746,7 +728,7 @@ class UFCE():
                                             tempdf1 = temptempdf.copy()
                                             tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                             f3_val = reg_model_inner.predict(tempdf1.values)
-                                            if f3 == 'CCAvg':
+                                            if isinstance(f3, float):
                                                 temptempdf.loc[:, f3] = f3_val[0]
                                             else:
                                                 temptempdf.loc[:, f3] = float(int(f3_val[0]))
@@ -783,7 +765,7 @@ class UFCE():
                     if mse > 1.5:
                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                         f2_val = reg_model.predict(tempdf1.values)
-                        if f2 == 'CCAvg':
+                        if isinstance(f2, float):
                             temptempdf.loc[:, f2] = f2_val[0]
                         else:
                             temptempdf.loc[:, f2] = int(f2_val[0])
@@ -795,7 +777,7 @@ class UFCE():
                                         tempdf1 = temptempdf.copy()
                                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                         f3_val = reg_model_inner.predict(tempdf1.values)
-                                        if f3 == 'CCAvg':
+                                        if isinstance(f3, float):
                                             temptempdf.loc[:, f3] = f3_val[0]
                                         else:
                                             temptempdf.loc[:, f3] = int(f3_val[0])
@@ -837,6 +819,9 @@ class UFCE():
         l1_diff_mad = l1_diff / mad
         return l1_diff_mad.sum()
 
+    # this function is customised according to our needs, the orginal source of these functions belongs to:
+    #"Guidotti, R. Counterfactual explanations and how to find them: literature review and benchmarking. Data Min Knowl Disc (2022). https://doi.org/10.1007/s10618-022-00831-6
+    # Begin> 3rd party adapted ///////
     def continuous_distance(self, x, cf_list, continuous_features, metric='euclidean', X=None, agg=None):
         """
         :param x:
@@ -886,6 +871,7 @@ class UFCE():
 
         if agg == 'min':
             return np.min(dist)
+    
     def distance_e2j(self, x, cf_list, continuous_features, categorical_features, ratio_cont=None, agg=None):
         """
         :param x:
@@ -1023,7 +1009,8 @@ class UFCE():
             return tempone, result / K
         else:
             return tempone, result
-
+    # End> 3rd party adapted ///////
+    
     def diverse_CFs(self, test, nn_valid, uf, c_f):
         """
         test: test instance
@@ -1044,6 +1031,7 @@ class UFCE():
             cfs = cfs[cfs[c_f[i]].between(test[c_f[i]].values[0], (test[c_f[i]].values + uf[c_f[i]])[0])]
         return cfs
 
+    # Begin> 3rd party adapted ///////
     def count_diversity(self, cf_list, features, nbr_features, continuous_features):
         """
         :param cf_list:
@@ -1060,6 +1048,8 @@ class UFCE():
                     if cf_list[i:i + 1][k].values != cf_list[j:j + 1][k].values:
                         nbr_changes += 1 if j in continuous_features else 0.5
         return nbr_changes / (nbr_cf * nbr_cf * nbr_features) if nbr_changes != 0 else 0.0
+    # End> 3rd party adapted ///////
+    
 
     def feasibility(self, X_test, cffile, X_train, features, variable_features, model, desired_outcome, label, dice=False):
         cflist = cffile
@@ -1082,9 +1072,6 @@ class UFCE():
         else:
             feas_result = feasible
         return feas_result
-
-
-#  ```updated approach v1.3 end here'''
 
     
     def get_highly_correlated(self, df, features, threshold=0.5):
@@ -1119,179 +1106,6 @@ class UFCE():
         #print("suggested-corr-features, feature_list:", features_to_use, feature_list)
         return corr_dict, features_to_use
 
-    def two_feature_synthetic_data(self, df, test_instance, user_corr_features, u_cat_f_list, user_term_intervals, features, perturbing_rates, model, desired_outcome, k):
-        #path2 = 'C:\\Users\\laboratorio\\Documents\\Suffian PhD Work\\codes\\UFCE\\data\\bank_updated\\'
-        #bucket_ranges = self.identify_test_instance_bucket(test_instance, protected_features)
-        count = 0
-        cfdf = pd.DataFrame()
-        two_feature_dataframe = pd.DataFrame()
-        ff = 'two_feature_perturbed_at_time'
-        #here finding the highly correlated features in case user don't specify any correlation
-        if user_term_intervals != [] and len(features) >= 2:
-            corr_features_dict, feature_to_use_list = self.get_highly_correlated(df, features)
-        else:
-            feature_to_use_list = user_corr_features
-        f1 = str(feature_to_use_list[0])
-        f2 = str(feature_to_use_list[1])
-        #print('f1, f2, f3',f1,f2,f3)
-        two_feature_data = pd.DataFrame()
-        tempdf1 = pd.DataFrame()
-        tempdf1 = test_instance.copy()
-        tempdf2 = pd.DataFrame()
-        tempdf2 = test_instance.copy()
-        #calculating iteration for f1
-        #print("here",user_term_intervals, f1)
-        interval_term_range1 = user_term_intervals[f1]
-        start1 = interval_term_range1[0]
-        end1 = interval_term_range1[1]
-        number_of_iterations1 = (end1 - start1) / perturbing_rates[f1]
-        # calculating iteration for f2
-        #print(f2, user_term_intervals)
-        interval_term_range2 = user_term_intervals[f2]
-        start2 = interval_term_range2[0]
-        end2 = interval_term_range2[1]
-        number_of_iterations2 = (end2 - start2) / perturbing_rates[f2]
-        #print("two feature: f1-iterations, f2-iterations", number_of_iterations1, number_of_iterations2)
-        tempdf1.loc[:, f1] = start1
-        flag1 = 0
-        for iter in range (int (number_of_iterations1)):
-            tempdf1.loc[:, f1] = tempdf1.loc[:, f1].values + perturbing_rates[f1]
-            #two_feature_data = pd.concat([two_feature_data, tempdf], ignore_index=True, axis=0)
-            #two_feature_dataframe = pd.concat([two_feature_dataframe, two_feature_data], ignore_index=True, axis=0)
-            tempdf1.loc[:, f2] = start2
-
-            for iter2 in range (int (number_of_iterations2)):
-                flag = 0  # toclose
-                tempdf1.loc[:, f2] = tempdf1.loc[:, f2].values + perturbing_rates[f2]
-                #for r in u_cat_f_list: #to reverse the actual values of the cat-features
-                #    tempdf1.loc[:,r] = test_instance.loc[:, r].values
-                #for uf in u_cat_f_list: #cat-features perturbing same time
-                #    if float(tempdf1.loc[:, uf].values) != 1.0:
-                #        tempdf1.loc[:, uf] = 1.0
-                #print(tempdf1.columns)
-                pred = model.predict(tempdf1)
-                if pred == desired_outcome:  #02 for benign, we try to convert 4 malignant into 2
-                    cfdf = pd.concat([cfdf, tempdf1], ignore_index=True, axis=0)
-                    flag1 += 1
-                    #print("found")
-                    break
-            if flag1 == k:
-                break    #count += 1
-
-        return cfdf
-
-    def three_feature_dynamic_synthetic_data(self, df, test_instance, user_corr_features, user_term_intervals, u_cat_f_list, features, perturbing_rates, model, desired_outcome, k):
-        """
-        :param df:
-        :param test_instance:
-        :param user_corr_features:
-        :param user_term_intervals:
-        :param u_cat_f_list:
-        :param features:
-        :param perturbing_rates:
-        :param model:
-        :param desired_outcome:
-        :param k:
-        :return:
-        """
-        #path4 = 'C:\\Users\\laboratorio\\Documents\\Suffian PhD Work\\codes\\UFCE\\data\\bank_updated\\'
-        #bucket_ranges = self.identify_test_instance_bucket(test_instance, protected_features)
-        count = 0
-        cfdf = pd.DataFrame()
-        three_feature_dataframe = pd.DataFrame()
-        three_feature_dataframe = test_instance.copy()
-        three_f_df_2_output = pd.DataFrame()
-        three_f_df_2_output = test_instance.copy()
-        fff = 'three_feature_dynamic_perturbed_at_time'
-        #print(self.get_highly_correlated(df, features))
-        if user_corr_features == [] and len(features) >= 2:  #user_term_intervals replaced with user_corrfeatures
-            corr_features_dict, feature_to_use_list = self.get_highly_correlated(df, features)
-            #print("in system corr features")
-        else:
-            feature_to_use_list = user_corr_features
-            #print("in the user corr-features")
-        f1 = feature_to_use_list[0]
-        f2 = feature_to_use_list[1]
-        f3 = feature_to_use_list[2]
-        one_feature_data = pd.DataFrame()
-        two_feature_data = pd.DataFrame()
-        three_feature_data = pd.DataFrame()
-        tempdf1 = pd.DataFrame()
-        tempdf1 = test_instance.copy()
-        tempdf2 = pd.DataFrame()
-        tempdf2 = test_instance.copy()
-        tempdf3 = pd.DataFrame()
-        tempdf3 = test_instance.copy()
-        three_feature_dataframe = test_instance.copy()
-        #calculating iterations
-        interval_ranges1 = user_term_intervals[f1]
-        interval_ranges2 = user_term_intervals[f2]
-        interval_ranges3 = user_term_intervals[f3]
-        start1 = interval_ranges1[0]
-        end1 = interval_ranges1[1]
-        number_of_iterations1 = (end1 - start1) / perturbing_rates[f1]
-        if number_of_iterations1 == 0:
-            number_of_iterations1 = 1
-        # calculating iteration for f2
-        start2 = interval_ranges2[0]
-        end2 = interval_ranges2[1]
-        number_of_iterations2 = (end2 - start2) / perturbing_rates[f2]
-        if number_of_iterations2 == 0:
-            number_of_iterations2 = 1
-        start3 = interval_ranges3[0]
-        end3 = interval_ranges3[1]
-        number_of_iterations3 = (end3 - start3) / perturbing_rates[f3]
-        if number_of_iterations3 == 0:
-            number_of_iterations3 = 1
-        x = 0
-        y = 0
-        z = 0
-        flag = 0
-        #print("three feature: f1-iterations, f2-iterations, f3-iterations", number_of_iterations1, number_of_iterations2, number_of_iterations3)
-        tempdf1.loc[:, f1] = start1
-        flag=0
-        for x in range(int (number_of_iterations1)):
-            #cfdf = pd.DataFrame()
-            tempdf1.loc[:,f1] = float(tempdf1.loc[:,f1].values) + perturbing_rates[f1]
-            #limit1 = end1
-            #print("limit1",limit1)
-            #if limit1 > end1:
-            #    tempdf1 = test_instance.copy()
-            tempdf2.loc[:, f2] = start2
-            #flag = 0 #toclose
-            for y in range(int(number_of_iterations2)):
-                tempdf2.loc[:,f2] = float(tempdf2.loc[:, f2].values) + perturbing_rates[f2]
-                #limit2 = end2
-                #print("limit2", limit2)
-                #if limit2 > end2:
-                #    tempdf2 = test_instance.copy()
-                tempdf3.loc[:, f3] = start3
-                #flag = 0 #toclose
-                for z in range(int(number_of_iterations3)):
-                    tempdf3.loc[:, f3] = float(tempdf3.loc[:,f3].values) + perturbing_rates[f3]
-                    #limit3 = end3
-                    #print("limit3", limit3)
-                    #if limit3 > end3:
-                    #    tempdf3 = test_instance.copy()
-                    three_feature_dataframe.loc[:, f1] = float(tempdf1.loc[:, f1].values)#topen
-                    three_feature_dataframe.loc[:, f2] = float(tempdf2.loc[:, f2].values)#topen
-                    three_feature_dataframe.loc[:, f3] = float(tempdf3.loc[:, f3].values)#topen
-                    #for r in u_cat_f_list:  # to reverse the actual values of the cat-features
-                    #    tempdf3.loc[:, r] = test_instance.loc[:, r].values
-                    #for uf in u_cat_f_list:  # cat-features perturbing same time
-                    #if float(tempdf3.loc[:, uf].values) != 1.0:
-                    #    tempdf3.loc[:, uf] = 1.0
-                    pred = model.predict(three_feature_dataframe)
-                    if pred == desired_outcome:  #02 for benign, we try to convert 4 malignant into 2
-                        cfdf = pd.concat([cfdf, three_feature_dataframe], ignore_index=True, axis=0)
-                        flag += 1
-                        break
-                if flag == k:
-                    break        #count += 1
-            if flag == k:
-                break
-        return cfdf
-
 
     def candidate_counterfactuals_df(self, df1, df2, df3, path):
         """
@@ -1301,7 +1115,7 @@ class UFCE():
         :param path:
         :return:
         """
-        #path = 'C:\\Users\\laboratorio\\Documents\\Suffian PhD Work\\codes\\UFCE\\data\\'
+        #path = 'C:\\Users\\~\\~\\data\\'
         f = 'Final_merged_df_with_all_combinations'
         df_2_return = pd.DataFrame()
         df_2_return = pd.concat([df1, df2], ignore_index=True, axis=0)
@@ -1311,172 +1125,6 @@ class UFCE():
         df_2_return.to_csv(path + '' + f + '' + '.csv')
         return df_2_return
 
-    # considering user feedback for feature changes and aligning with intervals
-    def user_feedback_processing(self, test_instance, user_feature_list=[], feature_flags={}, threshold_values={}, order_of_asymmetric={}):
-        """
-        :param test_instance:
-        :param user_feature_list:
-        :param feature_flags:
-        :param threshold_values:
-        :param order_of_asymmetric:
-        :return:
-        """
-        make_interval = dict()
-        if len(user_feature_list)==len(feature_flags)==len(threshold_values):
-            for feature in user_feature_list:  #using range-len only for compass to handle its no feature-in the df
-                feature_flag = feature_flags[feature]
-                if feature_flag == 'S': #threshold to +- (symmetric change)
-                    threshold = threshold_values[feature]
-                    #threshold (+) to add to make end of interval
-                    end = test_instance[feature].values + threshold #removed .values values for compass
-                    # threshold (-) to subtract to make start of interval
-                    start = test_instance[feature].values - threshold #removed .values for compass
-                    #if start < self.min_max_values_compass[feature]['min']: #new rule added for compass
-                    #    start = test_instance[feature].values
-                    make_interval[feature] = [start[0], end[0]]
-                else: # 'A', asymmetric change
-                    if order_of_asymmetric[feature] == 'I': #increasing order, add will make end of interval
-                        threshold = threshold_values[feature]
-                        #print(test_instance[feature].values)
-                        #print(feature)
-                        end = test_instance[feature].values + threshold #removed .values for the compass
-                        start = test_instance[feature].values
-                        #print("startend", start, end) # to check for compass
-                        make_interval[feature] = [start[0], end[0]] #removing subscript start[0] and end[0] only for compass
-                    else: # 'D', decreasing order, subtract will make start of inetrval
-                        threshold = threshold_values[feature]
-                        start = test_instance[feature].values - threshold #removed .values for compass
-                        end = test_instance[feature].values #removed .values for compass
-                        make_interval[feature] = [start[0], end[0]]
-        return make_interval
-
-    def classify_dataset_getModel(self, dataset_df, data_name=''):
-        """
-        :param dataset_df:
-        :param data_name:
-        :return:
-        """
-        if data_name == 'spotify':
-            dataset_df.reset_index(drop=True, inplace=True)
-            X = dataset_df.loc[:, dataset_df.columns != 'like_dislike']
-            y = dataset_df['like_dislike']
-        elif data_name == 'bank':
-            dataset_df.reset_index(drop=True, inplace=True)
-            X = dataset_df.loc[:, dataset_df.columns != 'Personal Loan']
-            y = dataset_df['Personal Loan']
-        elif data_name == 'cytometry':
-            dataset_df.reset_index(drop=True, inplace=True)
-            X = dataset_df.loc[:, dataset_df.columns != 'Class_Label']
-            y = dataset_df['Class_Label']
-
-        Xtrain, Xtest, ytrain, ytest = train_test_split(X, y)  # Split the data
-        svm_model = svm.SVC()
-        svm_model.fit(Xtrain, ytrain)
-        svm_test = svm_model.score(Xtest, ytest)
-        rf_mod = RandomForestClassifier(n_estimators=100,
-                                        max_depth=3,
-                                        max_features='auto',
-                                        min_samples_leaf=4,
-                                        bootstrap=True,
-                                        n_jobs=-1,
-                                        random_state=0)
-        rf_mod.fit(Xtrain, ytrain)
-        #rf_train = rf_mod.score(Xtrain, ytrain)
-        #rf_cv = cross_val_score(rf_mod, Xtrain, ytrain, cv=5).mean()
-        rf_test = rf_mod.score(Xtest, ytest)
-        # print('Evaluation of the Random Forest performance\n')
-        #print(f'Training score: {rf_train.round(4)}')
-        # print(f'Cross validation score: {rf_cv.round(4)}')
-        #dt_score = dt.score(Xtest,ytest)
-        print(f'Test score RF: {rf_test.round(4)}')
-        print(f'Test score SVM: {svm_test.round(4)}')
-        #print(f'Test score DT: {dt_score.round(4)}')
-        return svm_model, rf_mod,
-
-    def get_model(self, df, path):
-        #from sklearn.ensemble import RandomForestClassifier
-        from sklearn.linear_model import LogisticRegression
-        from sklearn.neural_network import MLPClassifier
-        import sklearn.neural_network as sknet
-        import pickle
-        from sklearn.model_selection import train_test_split, cross_val_score
-        xtr = 'Xtrain_df'
-        xts = 'Xtest_df'
-        ytr = 'ytrain_df'
-        yts = 'ytest_df'
-        xtest_2test = 'From Xtest_2_test_instances'
-
-        X = df.loc[:, df.columns != 'Severity']
-        y = df['Severity']
-        Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.25, stratify=y, shuffle=True, random_state=42)
-        #X = df.loc[:, df.columns != 'Personal Loan']
-        #y = df['Personal Loan']
-        #X = df.loc[:, df.columns != ' class']
-        #y = df[' class']
-        #Xtrain, Xtest, ytrain, ytest = train_test_split(X, y,test_size=0.25, stratify=df[' class'], shuffle=True, random_state=42)  # Split the data
-
-        #Xtrain, Xtest, ytrain, ytest = train_test_split(X, y)  # Split the data
-
-        #feature_columns = ['Number_of_Priors', 'score_factor', 'Age_Above_FourtyFive', 'Age_Below_TwentyFive',
-        #                   'Misdemeanor']
-        #X = df[feature_columns]
-        #y = df['Two_yr_Recidivism']
-        # Create train and validation set
-
-        #X = df.loc[:, df.columns != 'Outcome']
-        #y = df['Outcome']
-        #Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.25, stratify=df['Outcome'], shuffle=True, random_state=42)
-
-        #X = df.loc[:, df.columns != 'NoDefaultNextMonth']
-        #y = df['NoDefaultNextMonth']
-        #Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.25, stratify=df['NoDefaultNextMonth'], shuffle=True, random_state=42)
-
-        #Xtrain = pd.read_csv(path + '' + xtr + '' + '.csv')
-        #ytrain = pd.read_csv(path + '' + ytr + '' + '.csv')
-        #Xtest = pd.read_csv(path + '' + xts + '' + '.csv')
-        #ytest = pd.read_csv(path + '' + yts + '' + '.csv')
-        #print(Xtrain.shape, Xtest.shape, ytrain.shape, ytest.shape)
-        #del Xtrain['Unnamed: 0']
-        #print(Xtrain.head())
-        #print(ytrain.columns)
-
-        #del ytrain['Unnamed: 0']
-        #del Xtest['Unnamed: 0']
-        #del ytest['Unnamed: 0']
-        #Xtrainm = Xtrain.values
-        #ytrainm = ytrain.values
-        #Xtestm = Xtest.values
-        lg = LogisticRegression(max_iter = 1000)
-        lg.fit(Xtrain, ytrain) #ytrain.iloc[:,1]
-        print("Test Score Logistic Regression: {:.2%}".format(lg.score(Xtest, ytest))) #ytest.iloc[:,1]
-        # model = RandomForestClassifier(n_estimators=100,
-        #                               max_depth=3,
-        #                               max_features='auto',
-        #                               min_samples_leaf=4,
-        #                               bootstrap=True,
-        #                               n_jobs=-1,
-        #                               random_state=0)
-        #mlp = sknet.MLPClassifier(hidden_layer_sizes=(100,), random_state=42)
-        #mlp.fit(Xtrain, ytrain) #iloc[:,1]
-        #print("Test Score mlp: {:.2%}".format(mlp.score(Xtest, ytest)))
-
-        count = 0
-        onepreddf = pd.DataFrame()
-        for x in range(len(Xtest)):
-            pred =  lg.predict(Xtest[x:x + 1])
-            if pred == 1:  #to search 1 cause these are the ctually appendicitis, need to convert into 0
-                onepreddf = pd.concat([onepreddf, Xtest[x : x+1]], ignore_index=True, axis=0)
-                count += 1
-        onepreddf.to_csv(path + '' + xtest_2test + '' + '.csv')
-        Xtrain.to_csv(path + '' + xtr + '' + '.csv')
-        Xtest.to_csv(path + '' + xts + '' + '.csv')
-        ytrain.to_csv(path + '' + ytr + '' + '.csv')
-        ytest.to_csv(path + '' + yts + '' + '.csv')
-        # save the model to disk
-        filename = 'lg_model_mammo.sav'
-        pickle.dump(lg, open(filename, 'wb'))
-        print(len(Xtest), count)
-        return lg, Xtest
 
     def train_Outliers_isolation_model(self, df):
         """
@@ -1509,76 +1157,3 @@ class UFCE():
         """
         predicted = model.predict(cf_instance)
         print(predicted)
-
-    def MahalanobisDist_outlier_model(self, df, verbose=False):
-        """
-        :param df:
-        :param verbose:
-        :return:
-        """
-        import numpy as np
-        #data = df.as_matrix(columns=None)
-        data = df.values
-        covariance_matrix = np.cov(data, rowvar=False)
-        if self.is_pos_def(covariance_matrix):
-            inv_covariance_matrix = np.linalg.inv(covariance_matrix)
-            if self.is_pos_def(inv_covariance_matrix):
-                vars_mean = []
-                for i in range(data.shape[0]):
-                    vars_mean.append(list(data.mean(axis=0)))
-                diff = data - vars_mean
-                md = []
-                for i in range(len(diff)):
-                    md.append(np.sqrt(diff[i].dot(inv_covariance_matrix).dot(diff[i])))
-
-                if verbose:
-                    print("Covariance Matrix:\n {}\n".format(covariance_matrix))
-                    print("Inverse of Covariance Matrix:\n {}\n".format(inv_covariance_matrix))
-                    print("Variables Mean Vector:\n {}\n".format(vars_mean))
-                    print("Variables - Variables Mean Vector:\n {}\n".format(diff))
-                    print("Mahalanobis Distance:\n {}\n".format(md))
-                return md
-            else:
-                print("Error: Inverse of Covariance Matrix is not positive definite!")
-        else:
-            print("Error: Covariance Matrix is not positive definite!")
-
-    def is_pos_def(self, A):
-        """
-        :param A:
-        :return:
-        """
-        if np.allclose(A, A.T):
-            try:
-                np.linalg.cholesky(A)
-                return True
-            except np.linalg.LinAlgError:
-                return False
-        else:
-            return False
-
-    def MD_removeOutliers(self, df):
-        """
-        :param df:
-        :return:
-        """
-        MD = self.MahalanobisDist_outlier_model(df, verbose=False)
-        threshold = np.mean(MD) * 2.2  # adjust 1.5 accordingly
-        outliers = []
-        for i in range(len(MD)):
-            if MD[i] > threshold:
-                outliers.append(i)  # index of the outlier
-        return np.array(outliers)
-
-
-    def verify_causal_realistic_relations(self):
-        """"
-         TODO
-        """
-    def potential_cfs(self, val=10):
-        """
-        :param val:
-        :return:
-        """
-        self.testvalue =  val
-        print("test val ufce:", self.testvalue)
