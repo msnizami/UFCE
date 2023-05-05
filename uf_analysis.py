@@ -167,34 +167,34 @@ for u, uf in enumerate(ufs):
     for i, method in enumerate(cfmethods):
         print(f'\t\t\t\t Method: {method}  --------------')
         if method == 'DiCE':
-            dicecfs, methodtimes[i] = dice_cfexp(df, data_lab1, uf[0], MI_FP[:5], testset[:2], numf, f2change, outcome_label, k, bb)
+            dicecfs, methodtimes[i] = dice_cfexp(df, data_lab1, uf[0], MI_FP[:5], testset[:], numf, f2change, outcome_label, k, bb)
             del dicecfs[outcome_label]
             if len(dicecfs) != 0:
                 count = 0
-                for x in range(len(testset[:2])):
+                for x in range(len(testset[:])):
                     flag = modify_testinstance(testset[x:x+1], dicecfs[x:x+1], uf[0])
                     if flag:
                         count = count + 1
-                cfcounts[i] = count/len(testset[:2]) * 100
+                cfcounts[i] = count/len(testset[:]) * 100
             else:
                 cfcounts[i] = 0
             #print(f'\t\t\t\t Counterfactuals \t:{dicecfs.values}')
         elif method == 'AR':
-            arcfs, methodtimes[i] = ar_cfexp(X, numf, bb, testset[:2])
+            arcfs, methodtimes[i] = ar_cfexp(X, numf, bb, testset[:])
             if len(arcfs) != 0:
                 count = 0
-                for x in range(len(testset[:2])):
+                for x in range(len(testset[:])):
                     flag = modify_testinstance(testset[x:x + 1], arcfs[x:x + 1], uf[0])
                     if flag:
                         count = count + 1
-                cfcounts[i] = count / len(testset[:2]) * 100
+                cfcounts[i] = count / len(testset[:]) * 100
             else:
                 cfcounts[i] = 0
             #print(f'\t\t\t\t Counterfactual \t:{arcfs.values}')
         elif method == 'UFCE1':
-            onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X, data_lab1, testset[:2], uf[0], f2change, numf, catf, bb, desired_outcome, k)
+            onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X, data_lab1, testset[:], uf[0], step, f2change, numf, catf, bb, desired_outcome, k)
             if len(onecfs) != 0:
-                cfcounts[i] = len(onecfs)/len(testset[:2]) * 100
+                cfcounts[i] = len(onecfs)/len(testset[:]) * 100
             else:
                 cfcounts[i] = 0
             # for id in foundidx1:
@@ -202,9 +202,9 @@ for u, uf in enumerate(ufs):
             #     print(f'\t\t\t\t UF with MC \t:{interval1[id]}')
             #     print(f'\t\t Counterfactual \t:{onecfs[id:id+1].values}')
         elif method == 'UFCE2':
-            twocfs, methodtimes[i], foundidx2, interval2, testout2 = dfexp(X, data_lab1, testset[:2], uf[0], MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
+            twocfs, methodtimes[i], foundidx2, interval2, testout2 = dfexp(X, data_lab1, testset[:], uf[0], MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
             if len(twocfs) != 0:
-                cfcounts[i] = len(twocfs)/len(testset[:2]) * 100
+                cfcounts[i] = len(twocfs)/len(testset[:]) * 100
             else:
                 cfcounts[i] = 0
             # for id in foundidx2:
@@ -212,9 +212,9 @@ for u, uf in enumerate(ufs):
             #     print(f'\t\t\t\t UF with MC \t:{interval2[id]}')
             #     print(f'\t\t\t\t Counterfactual \t:{twocfs[id:id + 1].values}')
         else:
-            threecfs, methodtimes[i], foundidx3, interval3, testout3 = tfexp(X, data_lab1, testset[:2], uf[0], MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
+            threecfs, methodtimes[i], foundidx3, interval3, testout3 = tfexp(X, data_lab1, testset[:], uf[0], MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
             if len(threecfs) != 0:
-                cfcounts[i] = len(threecfs)/len(testset[:2]) * 100
+                cfcounts[i] = len(threecfs)/len(testset[:]) * 100
             else:
                 cfcounts[i] = 0
             # for id in foundidx3:
