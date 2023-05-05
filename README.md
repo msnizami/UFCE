@@ -1,6 +1,7 @@
 ## User Feedback-based Counterfactual Explanations (UFCE)
 
-This ReadMe file provides an overview of the main steps to adopt for generating counterfactual explanations with UFCE. The complete source code and all the utilities are availble in the root folder. 
+This ReadMe file provides an overview of the main steps to adopt for generating counterfactual explanations with UFCE. The complete source code and all the utilities are availble in the root folder.
+This repository contains the source code for UFCE which is under reviewe in a journal (please, consider it confidential at the moment for reusing).
 
 ### Installing necessary libraries
 To install the libraries, download the UFCE folder and navigate to root folder in the terminal and run the following command:
@@ -59,7 +60,7 @@ no_cf_exp = 1
 # this calls to Single_F method
 onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X, 
                                                                data_lab1, 
-                                                               testset[:1], uf, 
+                                                               testset[:1], uf, step, 
                                                                f2change, numf, catf, 
                                                                lr_blackbox, 
                                                                desired_outcome, 
@@ -114,6 +115,8 @@ ufc.generate_suggestion_explanation(outcome_var, desired_class, actual_class, fe
 The file `experiments.py` can be run in PyCharm IDE or in Jupyetr Notebook or on the terminal (cmd). 
 To do so, download the code folder (UFCE). Open the file `experiments.py` in any editor and set the paths of your system or working directory.
 Open the cmd terminal, navigate to the root folder and run the command: `python experiments.py`
+
+To runt the user feedback analysis, run the `uf_analysis.py`.
 
 ##### The already generated results are present in the directory at `UFCE/folds/bank/results/`. Similarly, the results of all CF methods on 5 data sets for different evaluation metrics are present in the directory at `UFCE/folds/`. 
 
