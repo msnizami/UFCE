@@ -64,10 +64,10 @@ def classify_dataset_getModel(dataset_df, data_name=''):
 
     ## 10-fold cross validation
 
-    mlp = MLPClassifier(max_iter=1000)
-    mlp.fit(Xtrain, ytrain)
-    scores1 = cross_val_score(mlp, X=Xtrain, y=ytrain, cv=10, n_jobs=1)
-    mlp_mean, mlp_std = np.mean(scores1), np.std(scores1)
+    # mlp = MLPClassifier(max_iter=1000)
+    # mlp.fit(Xtrain, ytrain)
+    # scores1 = cross_val_score(mlp, X=Xtrain, y=ytrain, cv=10, n_jobs=1)
+    # mlp_mean, mlp_std = np.mean(scores1), np.std(scores1)
     # preds = mlp.predict(Xtest)
     # tn, fp, fn, tp = confusion_matrix(ytest, preds)
     # predictions = clf.predict(inputs)
@@ -80,12 +80,12 @@ def classify_dataset_getModel(dataset_df, data_name=''):
 
     lr = LogisticRegression(max_iter=1000)
     lr.fit(Xtrain, ytrain)
-    scores2 = cross_val_score(mlp, X=Xtrain, y=ytrain, cv=10, n_jobs=1)
+    scores2 = cross_val_score(lr, X=Xtrain, y=ytrain, cv=10, n_jobs=1)
     lr_mean, lr_std = np.mean(scores2), np.std(scores2)
     # lr_r2 = r2_score(ytest.values.ravel(), lr.predict(Xtest))
     # lr_acc = accuracy_score(ytest.values.ravel(), lr.predict(Xtest))
 
-    return mlp, mlp_mean, mlp_std, lr, lr_mean, lr_std, Xtest, Xtrain, X, y, dataset_df
+    return lr, lr_mean, lr_std, Xtest, Xtrain, X, y, dataset_df #mlp, mlp_mean, mlp_std,
 
 def get_bank_user_constraints(bankloan):
     """
@@ -96,12 +96,12 @@ def get_bank_user_constraints(bankloan):
                 'SecuritiesAccount', 'CDAccount', 'Online', 'CreditCard']
     catf = ['SecuritiesAccount', 'CDAccount', 'Online', 'CreditCard']
     numf = ['Income', 'Family', 'CCAvg', 'Education', 'Mortgage']
-    uf = {'Income': 70, 'CCAvg': 3.0, 'Family': 3, 'Education': 3, 'Mortgage': 100, 'CDAccount': 1, 'Online': 1,
+    uf = {'Income': 40, 'CCAvg': 1.5, 'Family': 3, 'Education': 2, 'Mortgage': 80, 'CDAccount': 1, 'Online': 1,
           'SecuritiesAccount': 1, 'CreditCard': 1}
     step = {'Income': 1, 'CCAvg': 0.1, 'Family': 1, 'Education': 1, 'Mortgage': 1, 'CDAccount': 1, 'Online': 1,
          'SecuritiesAccount': 1, 'CreditCard': 1}
     # uf  = getMCSvalues()
-    f2change = ['Income', 'CCAvg', 'Mortgage', 'CDAccount', 'Online']
+    f2change = ['Income', 'CCAvg', 'Mortgage','CDAccount', 'Online']
     outcome_label = 'Personal Loan'
     desired_outcome = 1.0
     nbr_features = 9
@@ -154,11 +154,11 @@ def get_wine_user_constraints(wine):
     numf = ['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar',
                'chlorides', 'free sulfur dioxide', 'total sulfur dioxide', 'density',
                'pH', 'sulphates', 'alcohol']
-    uf = {'fixed acidity':3.0, 'residual sugar':3.0, 'free sulfur dioxide':8.0, 'total sulfur dioxide':12.0, 'pH':1.0, 'alcohol':2.0, 'density':0.20, 'volatile acidity':0.20, 'citric acid':0.8}
+    uf = {'fixed acidity':3.0, 'residual sugar':3.0, 'alcohol':2.0, 'free sulfur dioxide':8.0, 'total sulfur dioxide':12.0, 'pH':1.0, 'density':0.20, 'volatile acidity':0.20, 'citric acid':0.8} #
     step = {'fixed acidity': 0.5, 'residual sugar': 0.5, 'free sulfur dioxide': 1.0, 'total sulfur dioxide': 1.0,
           'pH': 0.5, 'alcohol': 0.5, 'density': 0.1, 'volatile acidity': 0.10, 'citric acid': 0.1}
     # uf  = getMCSvalues()
-    f2change = ['fixed acidity', 'residual sugar', 'free sulfur dioxide', 'total sulfur dioxide', 'pH', 'alcohol', 'density', 'volatile acidity']
+    f2change = ['fixed acidity', 'free sulfur dioxide', 'total sulfur dioxide', 'pH', 'alcohol', 'density', 'volatile acidity'] #'residual sugar',
     outcome_label = 'quality'
     desired_outcome = 1.0
     nbr_features = 11
@@ -208,14 +208,14 @@ def get_movie_user_constraints(movie):
                'Budget', 'Movie_length', 'Lead_ Actor_Rating', 'Lead_Actress_rating',
                'Director_rating', 'Producer_rating', 'Critic_rating', 'Trailer_views', 'Time_taken', 'Twitter_hastags', 'Genre',
                'Avg_age_actors', 'Num_multiplex', 'Collection']
-    uf = {'Production expense': 40, 'Num_multiplex':50,'Multiplex coverage':0.4, 'Movie_length':35, 'Lead_ Actor_Rating':4.0, 'Lead_Actress_rating':4.0,
-               'Director_rating':4.0, 'Producer_rating':4.0, 'Genre':3, 'Collection':20000}
+    uf = {'Production expense': 50, 'Num_multiplex':50,'Multiplex coverage':0.4, 'Movie_length':50, 'Lead_ Actor_Rating':5.0, 'Lead_Actress_rating':5.0,
+               'Director_rating':5.0, 'Producer_rating':5.0, 'Genre':3, 'Collection':30000, 'Critic_rating':2.0, 'Budget':3000}
     step = {'Production expense': 5, 'Num_multiplex': 5, 'Multiplex coverage': 0.2, 'Movie_length': 10,
           'Lead_ Actor_Rating': 1.0, 'Lead_Actress_rating': 1.0,
           'Director_rating': 1.0, 'Producer_rating': 1.0, 'Genre': 1, 'Collection': 5000}
     # uf  = getMCSvalues()
     f2change = ['Production expense', 'Multiplex coverage','Num_multiplex', 'Movie_length', 'Lead_ Actor_Rating', 'Lead_Actress_rating',
-               'Director_rating', 'Producer_rating', 'Genre', 'Collection']
+               'Director_rating', 'Producer_rating', 'Genre', 'Collection', 'Budget']
     outcome_label = 'Start_Tech_Oscar'
     desired_outcome = 1.0
     nbr_features = 18
