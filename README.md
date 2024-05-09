@@ -1,3 +1,5 @@
+#### This Project was Developed as part of the Doctoral Dissertation in the University of Urbino, Italy.
+
 ## User Feedback-based Counterfactual Explanations (UFCE)
 
 This ReadMe file provides an overview of the main steps to adopt for generating counterfactual explanations with UFCE. The complete source code and all the utilities are availble in the root folder.
