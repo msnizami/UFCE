@@ -8,9 +8,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
 #import recourse as rs
 
-
-# This script need to update for the dynamic integration of ML models.
-# defining a class for Models
 class Model:
     def __init__(self, path, datafile="Bank_Loan_processed_data.csv"):
         self.datafile = datafile

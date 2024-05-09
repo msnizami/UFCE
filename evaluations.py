@@ -42,7 +42,7 @@ def Joint_proximity(oneF_cfdf, twoF_cfdf, threeF_cfdf, dice_cfs, ar_cfs, X_test,
     ar_std = np.std(ar_e2j) / np.sqrt(np.size(ar_e2j))
     one_std = np.std(one_e2j) / np.sqrt(np.size(one_e2j))
     two_std = np.std(two_e2j) / np.sqrt(np.size(two_e2j))
-    three_std = np.std(two_e2j) / np.sqrt(np.size(two_e2j))
+    three_std = np.std(three_e2j) / np.sqrt(np.size(three_e2j))
     stds = [one_std, two_std, three_std, dice_std, ar_std]
     #mstds = [j / max(stds) for j in stds]
     return means, stds
@@ -283,14 +283,12 @@ def Feasibility(onecfs, testout1, twocfs, testout2, threecfs, testout3, dice_cfs
     :return:
     """
     # print("DiCE caledddddd-------------------")
-    # print(dice_cfs.columns)
-    # print(dice_cfs_v.columns)
     idx = 0
     d_feas, temp = ufc.feasibility(X_test, dice_cfs, X_train, features, f2change, bb, desired_outcome, uf, idx, method = "other")
     d_feas_in, temp = ufc.feasibility(dicetestdata_in, dicecfs_in, X_train, features, f2change, bb, desired_outcome, uf, idx, method="other")
     a_feas, temp = ufc.feasibility(X_test, ar_cfs, X_train, features, f2change, bb, desired_outcome, uf, idx, method="other")
     o_feas, temp = ufc.feasibility(testout1, onecfs, X_train, features, f2change, bb, desired_outcome, uf, idx, method="other")
-    t_feas, temp = ufc.feasibility(testout2, twocfs, X_train[:], features, f2change, bb, desired_outcome, uf, idx, method="other")
+    t_feas, temp = ufc.feasibility(testout2, twocfs, X_train, features, f2change, bb, desired_outcome, uf, idx, method="other")
     th_feas, temp = ufc.feasibility(testout3, threecfs, X_train, features, f2change, bb, desired_outcome, uf, idx, method="other")
     means = [o_feas, t_feas, th_feas, d_feas, d_feas_in, a_feas]
     stds = [0, 0, 0, 0, 0, 0]

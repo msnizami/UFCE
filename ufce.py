@@ -199,7 +199,6 @@ class UFCE():
         nn = pd.DataFrame.from_records(tree.data[idx], columns=test_inst.columns)
         return nn, idx
 
-    # nearest candidates providing desired outcome
     def get_cfs_validated(self, df, model, desired_outcome):
         """
         :param df: dataframe of found nearest neighbours
@@ -240,7 +239,7 @@ class UFCE():
         for f in feat2change:
             if f in uf.keys():
                 f_start = test[f].values
-                max_limit = test[f].values + uf[f] #new line
+                max_limit = test[f].values + uf[f]
                 if isinstance(uf[f], float):
                     space = np.arange(test[f].values, max_limit, 0.1)
                     if len(space) != 0:
@@ -268,14 +267,13 @@ class UFCE():
         :return: feature intervals dictionary
         """
         faithful_interval = dict()
-        #nn_intervals = make_interval(valid_nn, nnk, test)
         for featurepair in feature_pairs:
             f1 = featurepair[0]
             f2 = featurepair[1]
             f1_start, f1_end, f2_start, f2_end = 0, 0, 0, 0
             f1_start = test[f1].values
             ###
-            max_limit1 = f1_start + uf[f1] #new line
+            max_limit1 = f1_start + uf[f1] 
             if isinstance(uf[f1], float):
                 space1 = np.arange(f1_start, max_limit1, 0.1)
                 if len(space1) != 0:
@@ -289,10 +287,9 @@ class UFCE():
                 else:
                     f1_end = f1_start
             ###
-            #f1_end = test[f1].values + uf[f1]
             f2_start = test[f2].values
             ##
-            max_limit2 = f2_start + uf[f2] #new line
+            max_limit2 = f2_start + uf[f2] 
             if isinstance(uf[f2], float):
                 space2 = np.arange(f2_start, max_limit2, 0.1)
                 if len(space2) != 0:
@@ -305,8 +302,6 @@ class UFCE():
                     f2_end = space2[-1] #random.choice(space2)  # test[f].values + uf[f]
                 else:
                     f2_end = f2_start
-            ###
-            #f2_end = test[f2].values + uf[f2]
 
             if f1_end >= nn[f1].max():
                 faithful_interval[f1] = [test[f1].values[0], nn[f1].max()]
@@ -329,7 +324,6 @@ class UFCE():
         :param model: ML blackbox
         :return pred, tempdf: prediction and related dataframe
         """
-        # If found at mid, then return it
         tempdf.loc[:, feature] = mid
         pred = model.predict(tempdf)
         return pred, tempdf
@@ -370,7 +364,6 @@ class UFCE():
                             high = len(f1_space) - 1
                             mid = (high - low) // 2
                         pred, tempdf1 = self.pred_for_binsearch(tempdf, feature, start, mid, end, model)
-                        # print(start, mid, end, pred, tempdf1.values)
                         if pred == outcome:
                             cfdf = tempdf1.copy()
                             cfdfout = pd.concat([cfdfout, cfdf], ignore_index=True, axis=0)
@@ -378,12 +371,9 @@ class UFCE():
                             del f1_space[:mid+1]
                         except:
                             pass
-                    #print('cf from binsearch: ', cfdf)
-                    # cfdfout = pd.concat([cfdfout, cfdf], ignore_index=True, axis=0)
             else:
                 tempdfcat = test_instance.copy()
                 tempdfcat.loc[:, feature] = 1.0 if tempdfcat.loc[:, feature].values else 1.0
-                #one_all_explor = pd.concat([one_all_explor, tempdfcat], ignore_index=True, axis=0)
                 pred = model.predict(tempdfcat)
                 if pred == outcome:
                     cfdfout = pd.concat([cfdfout, tempdfcat], ignore_index=True, axis=0)
@@ -402,7 +392,6 @@ class UFCE():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=42)
         linear_reg = LinearRegression()
         linear_reg.fit(X_train, y_train.ravel())
-        # Predicting the Test set results
         y_pred = linear_reg.predict(X_test)
         from sklearn.metrics import mean_squared_error
         import math
@@ -422,14 +411,13 @@ class UFCE():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=42)
         log_reg = LogisticRegression(solver='lbfgs', max_iter=1000)
         log_reg.fit(X_train, y_train.ravel())
-        # Predicting the Test set results
         y_pred = log_reg.predict(X_test)
         ba = balanced_accuracy_score(y_test, y_pred)
         return log_reg, ba
 
     def Double_F(self, df, test_instance, protected_features, feature_pairs, u_cat_f_list, numf, user_term_intervals, features, model, desired_outcome, order, k):
         """
-        :param df:
+        :param df: dataframe
         :param test_instance:
         :param protected_features:
         :param feature_pairs:
@@ -451,7 +439,6 @@ class UFCE():
         for f in feature_to_use_list:
             f1 = f[0]
             f2 = f[1]
-            # print("features being used:", f1, f2)
             two_feature_data = pd.DataFrame()
             temptempdf = pd.DataFrame()
             tempdf1 = pd.DataFrame()
@@ -465,27 +452,18 @@ class UFCE():
                     start2 = int(interval_term_range2[0])
                     end2 = int(interval_term_range2[1])
                     reg_model, mse, rmse = self.regressionModel(df, f1, f2)
-                    #reg_model, mse, rmse = self.regressionModel_intervalconfined(df, f1, user_term_intervals[f1], f2)
-                    # print(start1, end1)
                     if isinstance(start1, int) and isinstance(end1, int):
                         f1_space = [item for item in range(start1, end1 + 1)]
                     else:
                         f1_space = sorted(np.round(random.uniform(start1, end1), 2) for _ in range(20))
-                        # print("here for 2f", f1, f2)
-                    # if mse > 0.5:
-                    #     iter = 0
                     while len(f1_space) != 0:
                         tempdf1 = test_instance.copy()
                         if len(f1_space) != 0:
                             low = 0
                             high = len(f1_space) - 1
                             mid = (high - low) // 2
-                            #print("lowmidhigh", f1_space[low], f1_space[mid], f1_space[high])
-                        # print(f1_space)
                         tempdf1.loc[:, f1] = f1_space[mid]
                         temptempdf = tempdf1.copy()
-                        # tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
-                        #feature-2 to changes
                         if isinstance(start2, int) and isinstance(end2, int):
                             f2_space = [item for item in range(start2, end2 + 1)]
                         else:
@@ -498,21 +476,10 @@ class UFCE():
                                 mid_in = (high_in - low_in) // 2
                             tempdf1.loc[:, f2] = f2_space[mid_in]
                             temptempdf = tempdf1.copy()
-                        # f2_val = reg_model.predict(tempdf1.values)
-                        # if isinstance(f2, float):
-                        #     temptempdf.loc[:, f2] = f2_val[0]
-                        # else:
-                        #     temptempdf.loc[:, f2] = float(int(f2_val[0]))
-                        # if f2_val[0] >= start2 and f2_val <= df[f2].max():  #end2: # df[f2].min() <= , f2_val >= start2 and f2_val <= end2:
-                            # two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0, sort=False)
                             temptempdf = temptempdf[order]
-                            # print("nu-num",temptempdf)
                             pred = model.predict(temptempdf)
-                            # print(test_instance.values)
-                            # print(temptempdf.values)
                             if pred == desired_outcome:  #
                                 cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0, sort=False)
-                                # break #commented for movie
                             cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
                             if len(cfdf) == k:
                                 break
@@ -524,19 +491,7 @@ class UFCE():
                             del f1_space[:mid+1]
                         except:
                             pass
-                    # cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0, sort=False)
-                    # if len(cfdf) == 10:
-                    #     break
-                    # f1_items = list(range(start1, end1 + 1))
-                    # f2_items = list(range(start2, end2 + 1))
-                    # for i in f1_items:
-                    #     tempdf1.loc[:, f1] = i
-                    #     temptempdf = tempdf1.copy()
-                    #     for j in f2_items:
-                    #         temptempdf.loc[:, f2] = j
-                    #         pred = model.predict(temptempdf)
-                    #         if pred == desired_outcome:  #
-                    #             cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0, sort=False)
+                
             elif (f1 in u_cat_f_list and f2 in u_cat_f_list) and f1 and f2 not in protected_features:  # both categorical
                 if f1 and f2 in user_term_intervals.keys():
                     tempdfcat = test_instance.copy()
@@ -545,7 +500,6 @@ class UFCE():
                     two_feature_explore = pd.concat([two_feature_explore, tempdfcat], ignore_index=True, axis=0)
                     tempdfcat = tempdfcat[order]
                     pred = model.predict(tempdfcat)
-                    # print("ct-ct", temptempdf)
                     if pred == desired_outcome:
                         cfdf = pd.concat([cfdf, tempdfcat], ignore_index=True, axis=0)
                     if len(cfdf) == k:
@@ -560,12 +514,10 @@ class UFCE():
                     start2 = int(interval_term_range2[0])
                     end2 = int(interval_term_range2[1])
                     log_model, ba = self.catclassifyModel(df, f1, f2)
-                    #log_model, ba = self.catclassifyModel_confined(df, f1, user_term_intervals[f1], f2)
                     if isinstance(start1, int) and isinstance(end1, int):
                         f1_space = [item for item in range(start1, end1 + 1)]
                     else:
                         f1_space = sorted(np.round(random.uniform(start1, end1), 2) for _ in range(20))
-                    # if ba >= 0.8:
                     while len(f1_space) != 0:
                         tempdf1 = test_instance.copy()
                         low = 0
@@ -579,16 +531,13 @@ class UFCE():
                             temptempdf.loc[:, f2] = f2_val[0]
                         else:
                             temptempdf.loc[:, f2] = float(int(f2_val[0]))
-                        if f2_val >= start2 and f2_val <= df[f2].max(): #f2_val >= df[f2].min() and
+                        if f2_val >= start2 and f2_val <= df[f2].max(): 
                             two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True,
                                                                 axis=0)
                             temptempdf = temptempdf[order]
-                            # print("num-ct", temptempdf)
                             pred = model.predict(temptempdf)
                             if pred == desired_outcome:  #
                                 cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
-                                # break #commented for movie
-                            # cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
                             if len(cfdf) == k:
                                 break
                         try:
@@ -598,9 +547,8 @@ class UFCE():
             elif (f1 in u_cat_f_list and f2 in numf) and (f1 and f2 not in protected_features): # cat and num
                 if f1 and f2 in user_term_intervals.keys():
                     temptempdf = tempdf1.copy()
-                    tempdf1.loc[:, f1] = user_term_intervals[f1][1] #0.0 if tempdf1.loc[:, f1].values else 1.0
+                    tempdf1.loc[:, f1] = user_term_intervals[f1][1] 
                     reg_model, mse, rmse = self.regressionModel(df, f1, f2)
-                    # if mse > 0.5:
                     tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                     f2_val = reg_model.predict(tempdf1.values)
                     if isinstance(f2, float):
@@ -609,22 +557,15 @@ class UFCE():
                         temptempdf.loc[:, f2] = float(int(f2_val[0]))
                     two_feature_explore = pd.concat([two_feature_explore, temptempdf], ignore_index=True, axis=0,
                                                        sort=False)
-                    if int(f2_val[0]) <= df[f2].max():  #df[f2].min() <=, f2_val >= start2 and f2_val <= end2:
+                    if int(f2_val[0]) <= df[f2].max():  
                         temptempdf = temptempdf[order]
-                        # print("ct-num", temptempdf)
                         pred = model.predict(temptempdf)
                         if pred == desired_outcome:
                             cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0)
                         if len(cfdf) == k:
                             break
-                                # iter += 1
             else:
                 print("could'nt found counterfactuals for the features: ", f1, f2)
-    #if len(cfdf) != 0:
-    #    cfdf.drop_duplicates(inplace=True)
-    # test_outliers_df = pd.concat([df, cfdf], ignore_index=True, axis=0)
-    # list_of_outliers = self.MD_removeOutliers(test_outliers_df)  # this should be the concat of the CFS and actual test instances
-    # print("OUTLIER INSTANCES WITH MD:", list_of_outliers)
         return cfdf, two_feature_explore
 
     def Triple_F(self, df, test_instance, protected_features, feature_pairs, u_cat_f_list, numf, user_term_intervals, features_2change, model, desired_outcome, order, k):
@@ -663,14 +604,10 @@ class UFCE():
                     start2 = int(interval_term_range2[0])
                     end2 = int(interval_term_range2[1])
                     reg_model, mse, rmse = self.regressionModel(df, f1, f2)
-                    #reg_model, mse, rmse = self.regressionModel_intervalconfined(df, f1, user_term_intervals[f1], f2)
                     if isinstance(start1, int)and isinstance(end1, int):
                         f1_space = [item for item in range(start1, end1 + 1)]
                     else:
                         f1_space = sorted(np.round(random.uniform(start1, end1), 2) for _ in range(8))
-                    # print("in 3F, mse", mse)
-                    # if mse > 1.5:
-                    #     iter = 0
                     while len(f1_space) != 0:
                         if len(f1_space) != 0:
                             low = 0
@@ -678,11 +615,10 @@ class UFCE():
                             mid = (high - low) // 2
                         else:
                             break
-                        tempdf1 = test_instance.copy() # new line for bupa
+                        tempdf1 = test_instance.copy() 
                         tempdf1.loc[:, f1] = f1_space[mid]
                         temptempdf = tempdf1.copy()
                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
-                        # print(tempdf1.values)
                         f2_val = reg_model.predict(tempdf1.values)
                         if isinstance(f2, float):
                             temptempdf.loc[:, f2] = f2_val[0]
@@ -693,7 +629,6 @@ class UFCE():
                                 if f3 != f1 and f3 != f2 and f3 in user_term_intervals.keys(): # new condition is added due to wine about f3 in userterms.
                                     if f3 in numf: # if f3 is numerical
                                         reg_model_inner, mse, rmse = self.regressionModel(df, f1, f3)
-                                            #reg_model_inner, mse, rmse = self.regressionModel_intervalconfined(df, f1, user_term_intervals[f1], f3)
                                         tempdf1 = temptempdf.copy()
                                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                         f3_val = reg_model_inner.predict(tempdf1.values)
@@ -708,7 +643,6 @@ class UFCE():
                                             three_feature_explore = pd.concat([three_feature_explore, temptempdf],
                                                                                     ignore_index=True, axis=0, sort=False)
                                             tempdf1 = temptempdf.copy()
-                                            # print("here all num", temptempdf.values)
                                             temptempdf = temptempdf[order]
                                             pred = model.predict(temptempdf)
                                             if pred == desired_outcome:  #
@@ -720,19 +654,14 @@ class UFCE():
                                                                         sort=False)
                                             if len(cfdf) == k:
                                                 break
-                                            # iter += 1
                                     else: #f3 in u_cat_f_list: #f3 is categorical
                                         log_model_inner, ba = self.catclassifyModel(df, f1, f3)
-                                        #log_model_inner, ba = self.catclassifyModel_confined(df, f1, user_term_intervals[f1], f3)
-                                        # print("in 3F, catfeature, ba", ba)
-                                        # if ba > .4:
                                         tempdf1 = temptempdf.copy()
                                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                         f3_val = log_model_inner.predict(tempdf1.values)
                                         three_feature_explore = pd.concat([three_feature_explore, temptempdf], ignore_index=True,
                                                                                   axis=0, sort=False)
                                         tempdf1 = temptempdf.copy()
-                                        # print("here num-num-cat", temptempdf.values)
                                         temptempdf = temptempdf[order]
                                         pred = model.predict(temptempdf)
                                         if pred == desired_outcome:  #
@@ -781,7 +710,6 @@ class UFCE():
                                     cfdf = pd.concat([cfdf, temptempdf], ignore_index=True, axis=0, sort=False)
                                 if len(cfdf) == k:
                                     break
-                                    # iter += 1
                             else:  # f3 is categorical
                                 log_model_inner, ba = self.catclassifyModel(df, f1, f3)
                                 # if ba > .5:
@@ -808,7 +736,6 @@ class UFCE():
                     start1 = interval_term_range1[0]
                     end1 = interval_term_range1[1]
                     log_model, ba = self.catclassifyModel(df, f1, f2)
-                    #log_model, ba = self.catclassifyModel_confined(df, f1, user_term_intervals[f1], f2)
                     if isinstance(start1, int) and isinstance(end1, int):
                         f1_space = [item for item in range(start1, end1 + 1)]
                     else:
@@ -834,7 +761,6 @@ class UFCE():
                                 if f3 != f1 and f3 != f2 and f3 not in protected_features:
                                     if f3 in numf: # if f3 is numerical
                                         reg_model_inner, mse, rmse = self.regressionModel(df, f1, f3)
-                                        #reg_model_inner, mse, rmse = self.regressionModel_intervalconfined(df, f1, user_term_intervals[f1], f3)
                                         tempdf1 = temptempdf.copy()
                                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                         f3_val = reg_model_inner.predict(tempdf1.values)
@@ -854,8 +780,6 @@ class UFCE():
                                             break
                                     else: #f3 is categorical
                                         log_model_inner, ba = self.catclassifyModel(df, f1, f3)
-                                        # log_model, ba = self.catclassifyModel_confined(df, f1, user_term_intervals[f1], f3)
-                                        # if ba > .5:
                                         tempdf1 = temptempdf.copy()
                                         tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                         f3_val = log_model_inner.predict(tempdf1.values)
@@ -878,16 +802,15 @@ class UFCE():
             elif f1 in u_cat_f_list and f2 in numf and (f1 and f2 not in protected_features): # cat and num
                 if f1 and f2 in user_term_intervals.keys():
                     temptempdf = tempdf1.copy()
-                    tempdf1.loc[:, f1] = user_term_intervals[f1][1] #0.0 if tempdf1.loc[:, f1].values else 1.0
+                    tempdf1.loc[:, f1] = user_term_intervals[f1][1] 
                     reg_model, mse, rmse = self.regressionModel(df, f1, f2)
-                    # if mse > 1.5:
                     tempdf1 = tempdf1.loc[:, tempdf1.columns != f2]
                     f2_val = reg_model.predict(tempdf1.values)
                     if isinstance(f2, float):
                         temptempdf.loc[:, f2] = f2_val[0]
                     else:
                         temptempdf.loc[:, f2] = int(f2_val[0])
-                    if int(f2_val[0]) <= df[f2].max():  #df[f2].min() <= , f2_val >= start2 and f2_val <= end2:
+                    if int(f2_val[0]) <= df[f2].max():  
                         for f3 in features_2change:
                             if f3 != f1 and f3 != f2 and f3 not in protected_features:
                                 if f3 in numf:  # if f3 is numerical
@@ -911,7 +834,6 @@ class UFCE():
                                         break
                                 else:  # f3 is categorical
                                     log_model_inner, ba = self.catclassifyModel(df, f1, f3)
-                                    # if ba > .5:
                                     tempdf1 = temptempdf.copy()
                                     tempdf1 = tempdf1.loc[:, tempdf1.columns != f3]
                                     f3_val = log_model_inner.predict(tempdf1.values)
@@ -931,11 +853,6 @@ class UFCE():
                                         break
             else:
                 print("Could'nt found counterfactuals for the features: ", f1, f2)
-    #if len(cfdf) != 0:
-    #    cfdf.drop_duplicates(inplace=True)
-    # test_outliers_df = pd.concat([df, cfdf], ignore_index=True, axis=0)
-    # list_of_outliers = self.MD_removeOutliers(test_outliers_df)  # this dataset should be the concat of the CFS and actual test instances
-    # print("OUTLIER INSTANCES WITH MD:", list_of_outliers)
         return cfdf, three_feature_explore
 
     def mad_cityblock(self, u, v, mad):
@@ -1032,14 +949,12 @@ class UFCE():
         :param scaler: scaler model
         :return: 1, 0
         """
-        # print("lofnnnnnnnnnnnn")
-        # print(x.values.reshape(1, -1).shape)
         if x.empty != True and cf_list.empty != True:
             X_train = np.vstack([x.values.reshape(1, -1), X])
-            nX_train = scaler.transform(X_train) #instead of X_train
+            nX_train = scaler.transform(X_train) 
             ncf_list = scaler.transform(cf_list)
 
-            clf = LocalOutlierFactor(n_neighbors=100, novelty=True) #1000 for movie, rest 100
+            clf = LocalOutlierFactor(n_neighbors=100, novelty=True) 
             clf.fit(nX_train)
             lof_values = clf.predict(ncf_list)
         else:
@@ -1062,15 +977,11 @@ class UFCE():
         result = 0
         if len(Xtest) != 0 and len(cfdf) != 0:
             for t in range(len(cfdf)):
-                # print(Xtest[t:t + 1])
                 res = int(self.lofn(Xtest[t:t + 1], cfdf[t:t + 1], Xtrain[:], scaler)) #lof - local outlier factor
-                # print(res)
                 if res == 1:
                     result += 1
         else:
             return result
-        # if result != 0:
-        #         result = result/K
         return result
         
     # Sparsity
@@ -1084,15 +995,11 @@ class UFCE():
         """
         # nbr_features = cf_list.shape[1]
         features = (list(x.columns))
-        # print(x.columns, cf_list.columns)
-        # print(continuous_features)
         nbr_changes = 0
         for j in features:
             if cf_list[j].values != x[j].values:
                 # if j in continuous_features:
                 nbr_changes += 1
-                # else:
-                #     nbr_changes += 0.5
         return nbr_changes
 
     def avg_nbr_changes_per_cfn(self, x, cf_list, continuous_features):
@@ -1126,15 +1033,12 @@ class UFCE():
         :param f2change:
         :return:
         """
-        # print("in nbr_act")
-        # print(x.values, cf_list.values)
         f_list = []
         nbr_actionable = 0
         for j in features:
             if cf_list[j].values != x[j].values and j in f2change:
                 nbr_actionable += 1
                 f_list.append(j)
-        # print("count of not act", not_actionable)
         return nbr_actionable, f_list
 
     def changes_per_cf(self, x, cf):
@@ -1144,6 +1048,7 @@ class UFCE():
             if cf[j].values != x[j].values:
                 nbr_changes += 1
         return nbr_changes
+
     def actionability(self, cfdf, X_test, features, changeable_features, idx, uf, method):
         """
         :param cfdf: counterfactuals (s)
@@ -1163,9 +1068,7 @@ class UFCE():
         for x in range(len(cfdf)):
             if method =="other":
                 nbr_act, f_list = self.nbr_actionable_cfn(X_test[x:x + 1], cfdf[x:x + 1], features, changeable_features)
-                # spar_count = self.changes_per_cf(X_test[x:x+1], cfdf[x:x + 1])
-                if nbr_act >= 3:  #if nbr_act/spar_count >= 0.2:
-                # if count >= 3: #for movie=5, bank=3, rest as bank
+                if nbr_act >= 3:  
                     count_in = 0
                     for j in f_list:
                         limit = X_test.at[x, j] + uf[j]
@@ -1176,21 +1079,6 @@ class UFCE():
                         flag = 1
                         idx1.append(x)
                         temp[x] = count
-                        # try:
-                        #     # Check if the column exists in the DataFrame
-                        #     if j in X_test.columns:
-                        #         # Check if the row index exists in the DataFrame
-                        #         if x in X_test.index:
-                        #             value = X_test.at[x, j]
-                        #             print(f"The value at row {x} and column {j} is: {value}")
-                        #         else:
-                        #             print(f"Invalid row index: {x}")
-                        #     else:
-                        #         print(f"Column not found: {j}")
-                        # except KeyError as e:
-                        #     print(f"KeyError: {e}")
-                        # except Exception as e:
-                        #     print(f"An error occurred: {e}")
                         
             else:
                 count, f_list = self.nbr_actionable_cfn(X_test[x:x + 1], cfdf[x:x + 1], features, changeable_features)
@@ -1199,14 +1087,6 @@ class UFCE():
                 idx1.append(x)
                 temp[x] = count
         return cfs, flag, idx1, temp
-        # tempone = dict()
-        # for t in range(len(Xtest[:K])):
-        #     tempone[t] = self.nbr_actionable_cfn(Xtest[t:t + 1], cfdf[t:t + 1], features, changeable_features)
-        #     result += tempone[t]
-        # if result != 0:
-        #     return tempone, result / K
-        # else:
-        #     return tempone, result
     
     # End> 3rd party adapted ///////
     
@@ -1219,19 +1099,12 @@ class UFCE():
         :return cfs : diverse counterfactual(s)
         """
         cfs = pd.DataFrame()
-        #for f in changeable_f:
-        # print(test[c_f[0]].values[0], (test[c_f[0]].values + uf[c_f[0]])[0])
-        # nn_d = nn[nn[c_f[0]].between(test[c_f[0]].values[0], (test[c_f[0]].values + uf[c_f[0]])[0])]
-        # nn_d = nn_d[nn_d[c_f[1]].between(test[c_f[1]].values[0], (test[c_f[1]].values + uf[c_f[1]])[0])]
-        # nn_d = nn_d[nn_d[c_f[2]].between(test[c_f[2]].values[0], (test[c_f[2]].values + uf[c_f[2]])[0])]
-        # nn_d = nn_d[nn_d[c_f[3]].between(test[c_f[3]].values[0], (test[c_f[3]].values + uf[c_f[3]])[0])]
         cfs = nn_valid
         for i in range(len(c_f)):
             cfs = cfs[cfs[c_f[i]].between(test[c_f[i]].values[0], (test[c_f[i]].values + uf[c_f[i]])[0])]
         return cfs
 
-    # Begin> 3rd party adapted ///////
-    
+    # Begin> 3rd party adapted /////// 
     def count_diversity(self, cf_list, features, nbr_features, continuous_features):
         """
         :param cf_list:
@@ -1256,16 +1129,10 @@ class UFCE():
         X_train.reset_index(drop = True, inplace = True)
         cffile.reset_index(drop=True, inplace=True)
         cflist = cffile
-        #if dice == True:
-        #    del cflist[label]  # only for dice
         scaler = StandardScaler()  # check verify the scaler
         scaler = scaler.fit(X_train[:])
         feasible = 0
         feas = 0
-        # if cflist.empty != True:
-        #     for c in range(len(cffile_v)):
-        #         valid = model.predict(cffile_v[c:c + 1].values)
-        #         if valid == desired_outcome:
         temp = pd.DataFrame()
         # temptest = pd.DataFrame()
         if cflist.empty != True:
@@ -1274,11 +1141,10 @@ class UFCE():
                     plaus = int(self.lofn(X_test[x:x + 1], cflist[x:x + 1], X_train[:], scaler))
                     if plaus == 1:
                         count, f_list = self.nbr_actionable_cfn(X_test[x:x + 1], cflist[x:x + 1], features, changeable_features)
-                        if count >= 2: #for movie 5 or more, for bank=3, etc
+                        if count >= 2: 
                             count_in = 0
                             for j in f_list:
                                 limit = X_test.at[x, j] + uf[j]
-                                # print("in Actionability", X_test.at[x, j], uf[j])
                                 if cflist.at[x, j] <= limit:
                                     count_in += 1
                             if count == count_in:
@@ -1288,27 +1154,9 @@ class UFCE():
                 else:    
                     plaus = int(self.lofn(X_test[x:x + 1], cflist[x:x + 1], X_train[:], scaler)) #make it 1000 in other cases, except movie
                     if plaus == 1:
-                        # count = self.nbr_actionable_cfn(X_test[x:x + 1], cflist[x:x + 1], features, changeable_features)
-                        # if count >= 2:
-                            # uf_ranges = {'Income': [X_test.at[x, 'Income'], uf['Income']], 'CCAvg': [X_test.at[x, 'CCAvg'], uf['CCAvg']], 'Mortgage': [X_test.at[x, 'Mortgage'], uf['Mortgage']]}#, 'CDAccount': [X_test.at[x, 'CDAccount'], uf['CDAccount']], 'Online': [X_test.at[x, 'Online'], uf['Online']] #, 'Education': [X_test[x:x + 1]['Education'][0], uf['Education']], 'CDAccount': [X_test[x:x + 1]['CDAccount'][0],  'Online': [X_test[x:x + 1]['Online'][0], uf['Online']]
-                            # sorted_uf = {key: sorted(value) for key, value in uf_ranges.items()}
-                            # mask = all(cflist[feature].between(start_range, end_range).all() for feature, (start_range, end_range) in sorted_uf.items())
-                            # if mask:
                         feas += 1
                         temp = pd.concat([temp, cflist[x:x + 1]], axis=0, ignore_index=True)
-                    # # temptest = pd.concat([temptest, finaltest[c:c + 1]], axis=0, ignore_index=True)
-                    # plauscount += 1
-                    # print("plauscount", plauscount)
-            # finaltest = pd.DataFrame()
-            # finalcfs = pd.DataFrame()
-            # if temp.empty != True:
-            #     for c in range(len(temp)):
-            #         act = self.nbr_actionable_cfn(temptest[c:c + 1], temp[c:c + 1], features, variable_features)
-            #         #ratio = 1 - (act / len(features))
-            #         if act >= 1:  # ratio <= 0.8:
-            #             finalcfs = pd.concat([finalcfs, temp[c:c + 1]], axis=0, ignore_index=True)
-            #             finaltest = pd.concat([finaltest, temptest[c:c + 1]], axis=0, ignore_index=True)
-            #             actcount += 1  
+
             if feas != 0:
                 return feas, temp
             else:
@@ -1336,7 +1184,6 @@ class UFCE():
             for v, i, j in s_corr_list:
                 cols = df[features].columns
                 corr_dict[corr_df.index[i]] = corr_df.columns[j]
-                #print("%s and %s = %.3f" % (corr_df.index[i], corr_df.columns[j], v))
 
         keys_list = corr_dict.keys()
         feature_list = []
@@ -1346,8 +1193,6 @@ class UFCE():
             feature_list.append(corr_dict[key])
         features_to_use.append(feature_list[0])
         features_to_use.append(feature_list[1])
-        #features_to_use.append(feature_list[2])
-        #print("suggested-corr-features, feature_list:", features_to_use, feature_list)
         return corr_dict, features_to_use
 
 
@@ -1365,7 +1210,6 @@ class UFCE():
         df_2_return = pd.concat([df1, df2], ignore_index=True, axis=0)
         df_2_return = pd.concat([df_2_return, df3], ignore_index=True, axis=0)
         df_2_return = df_2_return.transform(np.sort)
-        #df_2_return = df_2_return.drop_duplicates(keep='first')
         df_2_return.to_csv(path + '' + f + '' + '.csv')
         return df_2_return
 
@@ -1375,22 +1219,12 @@ class UFCE():
         :param df:
         :return:
         """
-        #import matplotlib.pyplot as plt
         from sklearn.ensemble import IsolationForest
         df1 = df.copy()
-        #plt.figure(figsize=(20, 10))
-        #plt.scatter(df1['Income'], df1['Mortgage'])
-        #plt.show()
-        ##apply an Isolation forest
         outlier_model = IsolationForest(n_estimators=100, max_samples=1000, contamination=.05, max_features=df1.shape[1])
         outlier_model.fit(df1)
         outliers_predicted = outlier_model.predict(df1)
 
-        # check the results
-        #df1['outlier'] = outliers_predicted
-        #plt.figure(figsize=(20, 10))
-        #plt.scatter(df1['Income'], df1['Mortgage'], c=df1['outlier'])
-        #plt.show()
         return outlier_model
 
     def get_Outlier_isolation_prediction(self, model, cf_instance):

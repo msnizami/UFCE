@@ -159,7 +159,7 @@ print(ufmc)
 
 # %%
 # #### Read data
-#path = r'/home/m.suffian/Downloads/UFCE-4GPU/data/'  # use this path on ubuntu. make sure you have correct path to UFCE folder.
+#path = r'/home/~/Downloads/UFCE-4GPU/data/'  # use this path on ubuntu. make sure you have correct path to UFCE folder.
 path = r'C:\Users\laboratorio\Documents\GitHub\UFCE\data' # use this path format on windows system, verify your drive path to UFCE
 pathbank = r'C:\Users\laboratorio\Documents\GitHub\UFCE\data\bank.csv'
 datasetdf = pd.read_csv(pathbank)

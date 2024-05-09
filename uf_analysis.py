@@ -108,7 +108,7 @@ def modify_testinstance(test, cf, uf):
 
 # %%
 # #### Read data
-#path = r'/home/m.suffian/Downloads/UFCE-4GPU/data/'  # use this path on ubuntu. make sure you have correct path to UFCE folder.
+#path = r'/home/~/Downloads/UFCE-4GPU/data/'  # use this path on ubuntu. make sure you have correct path to UFCE folder.
 path = r'C:\Users\laboratorio\Documents\GitHub\UFCE\data' # use this path format on windows system, verify your drive path to UFCE
 pathbank = r'C:\Users\laboratorio\Documents\GitHub\UFCE\data\bank.csv'
 datasetdf = pd.read_csv(pathbank)
@@ -442,91 +442,7 @@ for u, uf in enumerate(ufs):
             for x in range(len(threecfs)):
                 p = ufc.continuous_distance(threetestdata[x:x+1], threecfs[x:x+1], numf, metric='euclidean', agg=None)
                 threeprox.append(p)
-            # for x in idx1:
-            #     pa = ufc.continuous_distance(testset[x:x+1], three_actcfs[x:x+1], numf, metric='euclidean', agg=None)
-            #     threeprox_act.append(pa)
-            # if len(threecfs) != 0:
-            #     totest3 = testset.loc[foundidx3]
-            #     totest3 = totest3.reset_index(drop=True)
-            #     threecfs = threecfs.reset_index(drop=True)
-            #     cfcounts[i] = len(threecfs)/len(testset[:k]) * 100
-            # else:
-            #     cfcounts[i] = 0
-            # print("---------------3F idx---:", foundidx3)
-            # for id in foundidx3:
-            #     print(f'\t\t{id} Test instance \t:{testset[id:id + 1].values}')
-            #     print(f'\t\t UF with MC \t:{interval3[id]}')
-            #     print(f'\t\t Counterfactual \t:{threecfs[id:id + 1].values}')
 
-    # calling all 7 evaluation metrics (properties)
-    # # categorical proximity
-    # mmeans, mstds = [], []
-    # mmeans, mstds = Catproximity(onecfs, totest1, twocfs, totest2, threecfs, totest3, dicecfs, arcfs, testset[:k], catf)
-    # df = pd.DataFrame(data=[mmeans], columns=mnames)
-    # meandf_catproximity = pd.concat([meandf_catproximity, df], ignore_index=True, axis=0)
-    # df = pd.DataFrame(data=[mstds], columns=mnames)
-    # stddf_catproximity = pd.concat([stddf_catproximity, df], ignore_index=True, axis=0)
-    # mmeans.extend(mstds)
-    # df = pd.DataFrame(data=[mmeans], columns=cols)
-    # catproxidf = pd.concat([catproxidf, df], ignore_index=True, axis=0)
-    # # continuous proximity
-    # mmeans, mstds = [], []
-    # mmeans, mstds = Contproximity(onecfs, totest1, twocfs, totest2, threecfs, totest3, dicecfs, arcfs, testset[:k], numf)#Xtest
-    # df = pd.DataFrame(data=[mmeans], columns=mnames)
-    # meandf_contproximity = pd.concat([meandf_contproximity, df], ignore_index=True, axis=0)
-    # df = pd.DataFrame(data=[mstds], columns=mnames)
-    # stddf_contproximity = pd.concat([stddf_contproximity, df], ignore_index=True, axis=0)
-    # mmeans.extend(mstds)
-    # df = pd.DataFrame(data=[mmeans], columns=cols)
-    # contproxidf = pd.concat([contproxidf, df], ignore_index=True, axis=0)
-    # # sparsity
-    # mmeans, mstds = [], []
-    # mmeans, mstds = Sparsity(onecfs, totest1, twocfs, totest2, threecfs, totest3, dicecfs, arcfs, testset[:k], numf)#Xtest
-    # df = pd.DataFrame(data=[mmeans], columns=mnames)
-    # meandf_sparsity = pd.concat([meandf_sparsity, df], ignore_index=True, axis=0)
-    # df = pd.DataFrame(data=[mstds], columns=mnames)
-    # stddf_sparsity = pd.concat([stddf_sparsity, df], ignore_index=True, axis=0)
-    # mmeans.extend(mstds)
-    # df = pd.DataFrame(data=[mmeans], columns=cols)
-    # spardf = pd.concat([spardf, df], ignore_index=True, axis=0)
-    # # actionability
-    # mmeans, mstds = [], []
-    # mmeans, mstds = Actionability(onecfs, totest1, twocfs, testout2, threecfs, testout3, dicecfs, arcfs, testset[:k], features, f2change)#Xtest
-    # df = pd.DataFrame(data=[mmeans], columns=mnames)
-    # meandf_actionability = pd.concat([meandf_actionability, df], ignore_index=True, axis=0)
-    # df = pd.DataFrame(data=[mstds], columns=mnames)
-    # stddf_actionability = pd.concat([stddf_actionability, df], ignore_index=True, axis=0)
-    # mmeans.extend(mstds)
-    # df = pd.DataFrame(data=[mmeans], columns=cols)
-    # actdf = pd.concat([actdf, df], ignore_index=True, axis=0)
-    # mmeans, mstds = [], []
-    # mmeans, mstds = Plausibility(onecfs, testout1, twocfs, testout2, threecfs, testout3, dicecfs, arcfs, testset[:k], Xtrain)#Xtest
-    # df = pd.DataFrame(data=[mmeans], columns=mnames)
-    # meandf_plausibility = pd.concat([meandf_plausibility, df], ignore_index=True, axis=0)
-    # df = pd.DataFrame(data=[mstds], columns=mnames)
-    # stddf_plausibility = pd.concat([stddf_plausibility, df], ignore_index=True, axis=0)
-    # mmeans.extend(mstds)
-    # df = pd.DataFrame(data=[mmeans], columns=cols)
-    # plausdf = pd.concat([plausdf, df], ignore_index=True, axis=0)
-    # mmeans, mstds = [], []
-    # mmeans, mstds, d_valid, d_plaus, d_act, ar_valid, ar_plaus, ar_act, o_valid, o_plaus, o_act, t_valid, t_plaus, t_act, th_valid, th_plaus, th_act = Feasibility(onecfs,twocfs, threecfs, dicecfs, dicecfs_v, arcfs, arcfs_v, testset[:k], Xtrain, features, f2changee, bb, desired_outcome, outcome_label, uf[0])#Xtest
-    # df = pd.DataFrame(data=[mmeans], columns=mnames)
-    # meandf_feasibility = pd.concat([meandf_feasibility, df], ignore_index=True, axis=0)
-    # df = pd.DataFrame(data=[mstds], columns=mnames)
-    # stddf_feasibility = pd.concat([stddf_feasibility, df], ignore_index=True, axis=0)
-    # mmeans.extend(mstds)
-    # df = pd.DataFrame(data=[mmeans], columns=cols)
-    # feasidf = pd.concat([feasidf, df], ignore_index=True, axis=0)
-    # diceout.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\dice\dice_cfs5.csv', encoding='utf-8')
-    # dicetestdata.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\dice\dice_test5.csv', encoding='utf-8')
-    # arout.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\ar\ar_cfs5.csv', encoding='utf-8')
-    # artestdata.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\ar\ar_test5.csv', encoding='utf-8')
-    # oneout.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\one\one_cfs5.csv', encoding='utf-8')
-    # onetestdata.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\one\one_test5.csv', encoding='utf-8')
-    # twoout.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\two\two_cfs5.csv', encoding='utf-8')
-    # twotestdata.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\two\two_test5.csv', encoding='utf-8')
-    # threeout.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\three\three_cfs5.csv', encoding='utf-8')
-    # threetestdata.to_csv(r'C:\Users\laboratorio\Documents\GitHub\UFCE\results\three\three_test5.csv', encoding='utf-8')
     print("Testset length: ", k)
     print("\t Generated\tValid \t Proximity\t\t Sparsity\t Plausible\t Actionable\tFeasible\tPercentage_Feasible ")
     print(f"DiCE\t  {len(dicecfs)} \t\t {len(dicecfs)}\t {np.nanmean(diceprox):.2f}\t\t\t {d_spar:.2f} \t\t {d_plaus} \t\t {len(dice_actcfs)} \t\t  {d_feas} \t\t {(d_feas*100)/k}")

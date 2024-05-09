@@ -106,7 +106,7 @@ for dataset in datasets.keys():
     #     MI_FP = json.load(file)
     print(f'\t Top-5 Mutually-informed feature paris:{MI_FP[:5]}')
     # Calling here the test-folds method from testfolds
-    #create_folds(df, readpath)  # remestHPC doesnt allow write, use already generated testsets on cpu.system
+    #create_folds(df, readpath)  # HPC may not allow write, use already generated testsets on cpu.system
     
     scaler = StandardScaler()  # check verify the scaler
     scaler=scaler.fit(Xtrain[:])
@@ -201,46 +201,20 @@ for dataset in datasets.keys():
                         onetestdata = testset.loc[idx]
                         onetestdata = onetestdata.reset_index(drop=True)
                         onecfs = onecfs.reset_index(drop=True)
-                        # onecfs, methodtimes[i], foundidx1, interval1, testout1 = sfexp(X, data_lab1, testset[:], uf, step, f2change, numf, catf, bb, desired_outcome, k)
-                        # for id in foundidx1:
-                        #     print(f'\t\t\t\t{id} Test instance \t:{testset[id:id+1].values}')
-                        #     print(f'\t\t\t\t UF with MC \t:{interval1[id]}')
-                        #     print(f'\t\t Counterfactual \t:{onecfs[id:id+1].values}')
+
                     elif method == 'UFCE2':
                         twocfs, methodtimes[i], idx = dfexp(X, data_lab1, testset[:], uf, MI_FP[:5], numf, catf, f2change, protectf, bb, desired_outcome, no_cf, features)
                         # print("two cfs", len(twocfs))
                         twotestdata = testset.loc[idx]
                         twotestdata = twotestdata.reset_index(drop=True)
                         twocfs = twocfs.reset_index(drop=True)
-                        # twocfs, methodtimes[i], foundidx2, interval2, testout2 = dfexp(X, data_lab1, testset[:], uf, MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
-                        # for id in foundidx2:
-                        #     print(f'\t\t\t\t{id} Test instance \t:{testset[id:id + 1].values}')
-                        #     print(f'\t\t\t\t UF with MC \t:{interval2[id]}')
-                        #     print(f'\t\t\t\t Counterfactual \t:{twocfs[id:id + 1].values}')
+
                     else:
                         threecfs, methodtimes[i], idx = tfexp(X, data_lab1, testset[:], uf, MI_FP[:5], numf, catf, f2change, protectf, bb, desired_outcome, no_cf, features)#features
                         threetestdata = testset.loc[idx]
                         threetestdata = threetestdata.reset_index(drop=True)
                         threecfs = threecfs.reset_index(drop=True)
-                        # threecfs, methodtimes[i], foundidx3, interval3, testout3 = tfexp(X, data_lab1, testset[:], uf, MI_FP[:5], numf, catf, features, protectf, bb, desired_outcome, k)
-                        # for id in foundidx3:
-                        #     print(f'\t\t{id} Test instance \t:{testset[id:id + 1].values}')
-                        #     print(f'\t\t UF with MC \t:{interval3[id]}')
-                        #     print(f'\t\t Counterfactual \t:{threecfs[id:id + 1].values}')
-                # mmeans, mstds = Actionability(onecfs, onetestdata, twocfs, twotestdata, threecfs, threetestdata, dicecfs, arcfs, Xtest, features, f2change, uf)
-                # print("Testing mmeans", mmeans)
-                # # calling all 7 evaluation metrics (properties)
-                # # joint proximity
-                # mmeans, mstds = [], []
-                # mmeans, mstds = Joint_proximity(onecfs, twocfs, threecfs, dicecfs, arcfs, Xtest, numf, catf)
-                # df = pd.DataFrame(data=[mmeans], columns=mnames)
-                # meandf_jproximity = pd.concat([meandf_jproximity, df], ignore_index=True, axis=0)
-                # df = pd.DataFrame(data=[mstds], columns=mnames)
-                # stddf_jproximity = pd.concat([stddf_jproximity, df], ignore_index=True, axis=0)
-                # mmeans.extend(mstds)
-                # df = pd.DataFrame(data=[mmeans], columns=cols)
-                # jproxidf = pd.concat([jproxidf, df], ignore_index=True, axis=0)
-                # categorical proximity
+
                 mmeans, mstds = [], []
                 mmeans, mstds = Catproximity(onecfs, onetestdata, twocfs, twotestdata, threecfs, threetestdata, dicecfs, dicecfs_in, dicetestdata_in, arcfs, Xtest, catf)
                 df = pd.DataFrame(data=[mmeans], columns=mnames)
