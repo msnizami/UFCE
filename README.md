@@ -3,7 +3,7 @@
 ## User Feedback-based Counterfactual Explanations (UFCE)
 
 This ReadMe file provides an overview of the main steps to adopt for generating counterfactual explanations with UFCE. The complete source code and all the utilities are availble in the root folder.
-This repository contains the source code for UFCE which is under reviewe in a journal (please, consider it confidential at the moment for reusing).
+This repository contains the source code for UFCE which is accepted in international journal of computational intelligence systems.
 
 ### Installing necessary libraries
 To install the libraries, download the UFCE folder and navigate to root folder in the terminal and run the following command:
