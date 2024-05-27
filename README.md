@@ -3,7 +3,7 @@
 ## User Feedback-based Counterfactual Explanations (UFCE)
 
 This ReadMe file provides an overview of the main steps to adopt for generating counterfactual explanations with UFCE. The complete source code and all the utilities are availble in the root folder.
-This repository contains the source code for UFCE which is accepted in international journal of computational intelligence systems.
+This repository contains the source code for UFCE which is published in international journal of computational intelligence systems, you can read the related paper [here](https://link.springer.com/article/10.1007/s44196-024-00508-6).
 
 ### Installing necessary libraries
 To install the libraries, download the UFCE folder and navigate to root folder in the terminal and run the following command:
@@ -121,4 +121,21 @@ Open the cmd terminal, navigate to the root folder and run the command: `python 
 To runt the user feedback analysis, run the `uf_analysis.py`.
 
 ##### The already generated results are present in the directory at `UFCE/folds/bank/results/`. Similarly, the results of all CF methods on 5 data sets for different evaluation metrics are present in the directory at `UFCE/folds/`. 
+
+### Cite As
+
+If you use UFCE in your research, please cite it as:
+
+```python
+@article{suffian2024introducing,
+  title={Introducing User Feedback-Based Counterfactual Explanations (UFCE)},
+  author={Suffian, Muhammad and Alonso-Moral, Jose M and Bogliolo, Alessandro},
+  journal={International Journal of Computational Intelligence Systems},
+  volume={17},
+  number={1},
+  pages={123},
+  year={2024},
+  publisher={Springer}
+}
+```
 
